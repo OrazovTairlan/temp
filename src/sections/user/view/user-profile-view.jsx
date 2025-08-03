@@ -22,12 +22,7 @@ import { ProfileFollowers } from '../profile-followers';
 
 const TABS = [
   { value: 'profile', label: 'Профиль', icon: <Iconify icon="solar:user-id-bold" width={24} /> },
-  { value: 'followers', label: 'Подписчики', icon: <Iconify icon="solar:heart-bold" width={24} /> },
-  {
-    value: 'friends',
-    label: 'Друзья',
-    icon: <Iconify icon="solar:users-group-rounded-bold" width={24} />,
-  },
+  { value: 'followers', label: 'Подписчики', icon: <Iconify icon="solar:heart-bold" width={24} /> }
 ];
 
 // ----------------------------------------------------------------------

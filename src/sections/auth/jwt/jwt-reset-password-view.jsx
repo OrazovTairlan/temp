@@ -31,14 +31,16 @@ const ResetPasswordSchema = zod.object({
   new_password: zod.string().min(6, 'Пароль должен быть не менее 6 символов'),
 });
 
-
 // --- Child Component for the Forgot Password Form ---
 function ForgotPasswordForm({ onSetError, onSetSuccess, onSwitchView }) {
   const methods = useForm({
     resolver: zodResolver(ForgotPasswordSchema),
     defaultValues: { email: '' },
   });
-  const { handleSubmit, formState: { isSubmitting } } = methods;
+  const {
+    handleSubmit,
+    formState: { isSubmitting },
+  } = methods;
 
   const onSubmit = handleSubmit(async (data) => {
     onSetError('');
@@ -48,14 +50,21 @@ function ForgotPasswordForm({ onSetError, onSetSuccess, onSwitchView }) {
       onSetSuccess('Инструкции по сбросу пароля отправлены на вашу почту.');
       onSwitchView('resetPassword');
     } catch (error) {
-      onSetError(error.response?.data?.detail || 'Не удалось отправить инструкции. Проверьте email.');
+      onSetError(
+        error.response?.data?.detail || 'Не удалось отправить инструкции. Проверьте email.'
+      );
     }
   });
 
   return (
     <>
       <Stack spacing={1.5} sx={{ mb: 5 }}>
-        <Link component={RouterLink} href={"/auth/"} variant="subtitle2" sx={{ alignSelf: 'center' }}>
+        <Link
+          component={RouterLink}
+          href={'/auth/jwt/sign-in'}
+          variant="subtitle2"
+          sx={{ alignSelf: 'center' }}
+        >
           Вернуться ко входу
         </Link>
         <Typography sx={{ color: 'text.secondary' }}>
@@ -66,10 +75,22 @@ function ForgotPasswordForm({ onSetError, onSetSuccess, onSwitchView }) {
       <Form methods={methods} onSubmit={onSubmit}>
         <Stack spacing={3}>
           <Field.Text name="email" label="Email" />
-          <LoadingButton fullWidth color="inherit" size="large" type="submit" variant="contained" loading={isSubmitting}>
+          <LoadingButton
+            fullWidth
+            color="inherit"
+            size="large"
+            type="submit"
+            variant="contained"
+            loading={isSubmitting}
+          >
             Отправить
           </LoadingButton>
-          <Link component={RouterLink} href={paths.auth.jwt.signIn} variant="subtitle2" sx={{ alignSelf: 'center' }}>
+          <Link
+            component={RouterLink}
+            href={paths.auth.jwt.signIn}
+            variant="subtitle2"
+            sx={{ alignSelf: 'center' }}
+          >
             Вернуться ко входу
           </Link>
         </Stack>
@@ -78,7 +99,6 @@ function ForgotPasswordForm({ onSetError, onSetSuccess, onSwitchView }) {
   );
 }
 
-
 // --- Child Component for the Reset Password Form ---
 function ResetPasswordForm({ onSetError, onSetSuccess }) {
   const password = useBoolean();
@@ -86,7 +106,10 @@ function ResetPasswordForm({ onSetError, onSetSuccess }) {
     resolver: zodResolver(ResetPasswordSchema),
     defaultValues: { token: '', new_password: '' },
   });
-  const { handleSubmit, formState: { isSubmitting } } = methods;
+  const {
+    handleSubmit,
+    formState: { isSubmitting },
+  } = methods;
 
   const onSubmit = handleSubmit(async (data) => {
     onSetError('');
@@ -94,7 +117,7 @@ function ResetPasswordForm({ onSetError, onSetSuccess }) {
     try {
       await axiosCopy.post('/auth/reset-password', data);
       onSetSuccess('Пароль успешно изменен! Теперь вы можете войти с новым паролем.');
-    } catch (error)      {
+    } catch (error) {
       onSetError(error.response?.data?.detail || 'Неверный токен или произошла ошибка.');
     }
   });
@@ -125,10 +148,22 @@ function ResetPasswordForm({ onSetError, onSetSuccess }) {
               ),
             }}
           />
-          <LoadingButton fullWidth color="inherit" size="large" type="submit" variant="contained" loading={isSubmitting}>
+          <LoadingButton
+            fullWidth
+            color="inherit"
+            size="large"
+            type="submit"
+            variant="contained"
+            loading={isSubmitting}
+          >
             Установить новый пароль
           </LoadingButton>
-          <Link component={RouterLink} href={paths.auth.jwt.signIn} variant="subtitle2" sx={{ alignSelf: 'center' }}>
+          <Link
+            component={RouterLink}
+            href={paths.auth.jwt.signIn}
+            variant="subtitle2"
+            sx={{ alignSelf: 'center' }}
+          >
             Вернуться ко входу
           </Link>
         </Stack>
@@ -136,7 +171,6 @@ function ResetPasswordForm({ onSetError, onSetSuccess }) {
     </>
   );
 }
-
 
 // --- Main Parent Component ---
 export function JwtResetPassword() {
@@ -146,8 +180,16 @@ export function JwtResetPassword() {
 
   return (
     <>
-      {!!errorMsg && <Alert severity="error" sx={{ mb: 3 }}>{errorMsg}</Alert>}
-      {!!successMsg && <Alert severity="success" sx={{ mb: 3 }}>{successMsg}</Alert>}
+      {!!errorMsg && (
+        <Alert severity="error" sx={{ mb: 3 }}>
+          {errorMsg}
+        </Alert>
+      )}
+      {!!successMsg && (
+        <Alert severity="success" sx={{ mb: 3 }}>
+          {successMsg}
+        </Alert>
+      )}
 
       {view === 'forgotPassword' && (
         <ForgotPasswordForm
@@ -158,10 +200,7 @@ export function JwtResetPassword() {
       )}
 
       {view === 'resetPassword' && (
-        <ResetPasswordForm
-          onSetError={setErrorMsg}
-          onSetSuccess={setSuccessMsg}
-        />
+        <ResetPasswordForm onSetError={setErrorMsg} onSetSuccess={setSuccessMsg} />
       )}
     </>
   );

@@ -12,6 +12,7 @@ import { LoadingButton } from '@mui/lab';
 
 import { Iconify } from 'src/components/iconify';
 import { axiosCopy } from 'src/store/useBoundStore';
+import { useParams } from './routes/hooks/index.js';
 
 // ----------------------------------------------------------------------
 
@@ -45,7 +46,6 @@ const DynamicAvatar = ({ avatarKey, alt, sx }) => {
     </Avatar>
   );
 };
-
 
 function FollowerItem({ follower, onFollowToggle, isUpdating }) {
   const { firstname, surname, bio, avatar_key, is_following, login } = follower;
@@ -94,6 +94,7 @@ function FollowerItem({ follower, onFollowToggle, isUpdating }) {
 
 export function OtherProfileFollowers() {
   const [followers, setFollowers] = useState([]);
+  const { id } = useParams();
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
   const [updatingId, setUpdatingId] = useState(null);
@@ -102,7 +103,7 @@ export function OtherProfileFollowers() {
     setIsLoading(true);
     setError(null);
     try {
-      const response = await axiosCopy.get('/user/me/follower');
+      const response = await axiosCopy.get(`/user/${id}/follower`);
       setFollowers(response.data);
     } catch (err) {
       console.error('Failed to fetch followers:', err);
@@ -120,8 +121,8 @@ export function OtherProfileFollowers() {
     setUpdatingId(login);
 
     // Optimistic update
-    setFollowers(currentFollowers =>
-      currentFollowers.map(f =>
+    setFollowers((currentFollowers) =>
+      currentFollowers.map((f) =>
         f.login === login ? { ...f, is_following: !isCurrentlyFollowing } : f
       )
     );
@@ -135,8 +136,8 @@ export function OtherProfileFollowers() {
     } catch (err) {
       console.error('Failed to update follow status:', err);
       // Revert on error
-      setFollowers(currentFollowers =>
-        currentFollowers.map(f =>
+      setFollowers((currentFollowers) =>
+        currentFollowers.map((f) =>
           f.login === login ? { ...f, is_following: isCurrentlyFollowing } : f
         )
       );

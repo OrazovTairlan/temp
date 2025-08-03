@@ -65,7 +65,7 @@ export const navData = [
     subheader: 'Главное',
     items: [
       {
-        title: 'Твиты',
+        title: 'Мой профиль',
         path: paths.dashboard.user.root,
         icon: ICONS.user,
         // children: [
@@ -85,13 +85,25 @@ export const navData = [
       {
         title: 'Персональные настройки',
         path: paths.dashboard.user.root + "/personal",
-        icon: ICONS.kanban,
+        icon: ICONS.external,
+      },
+
+      {
+        title: 'Создание администратора',
+        path: paths.dashboard.user.root + "/admin-create",
+        icon: ICONS.analytics,
+      },
+
+      {
+        title: 'Заполнение личной информации',
+        path: paths.dashboard.user.root + "/bio-fill",
+        icon: ICONS.blog,
       },
 
       {
         title: 'Люди',
         path: paths.dashboard.user.root + "/people",
-        icon: ICONS.kanban,
+        icon: ICONS.chat,
       },
 
       // {
@@ -105,7 +117,7 @@ export const navData = [
       //   icon: ICONS.kanban,
       // },
       {
-        title: 'Главное',
+        title: 'Лента',
         path: paths.dashboard.user.root + "/social",
         icon: <DashboardIcon />,
       },

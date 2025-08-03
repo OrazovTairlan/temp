@@ -1,3 +1,4 @@
+/* eslint-disable */
 import React, { useState, useEffect, useCallback } from 'react';
 import { z as zod } from 'zod';
 import { useForm } from 'react-hook-form';
@@ -15,18 +16,24 @@ import {
   Avatar,
   Badge,
   IconButton,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogContentText,
+  Button,
+  MenuItem,
 } from '@mui/material';
 import { LoadingButton } from '@mui/lab';
 
+// Assuming these components and utilities are correctly set up
 import { DashboardContent } from './layouts/dashboard/index.js';
 import { axiosCopy, useAppStore } from 'src/store/useBoundStore';
 import { Iconify } from 'src/components/iconify';
 import { Form, Field } from 'src/components/hook-form';
+import DialogTitle from '@mui/material/DialogTitle';
 
-const MEDIA_BASE_URL = 'http://localhost:8000/files/';
 
 // --- Zod Schemas for Validation ---
-// Added .nullable() to optional fields to match API responses
 const GeneralInfoSchema = zod.object({
   login: zod.string().min(1, 'Логин обязателен'),
   firstname: zod.string().min(1, 'Имя обязательно'),
@@ -38,6 +45,7 @@ const GeneralInfoSchema = zod.object({
     country: zod.string().optional().nullable(),
     city: zod.string().optional().nullable(),
     position: zod.string().optional().nullable(),
+    sub_position: zod.string().optional().nullable(), // Added for conditional logic
     work_place: zod.string().optional().nullable(),
     about_me: zod.string().optional().nullable(),
     specialization: zod.string().optional().nullable(),
@@ -59,9 +67,6 @@ const SupportSchema = zod.object({
 
 /**
  * Recursively gets only the dirty (changed) values from the form state.
- * @param {object} dirtyFields - The dirtyFields object from react-hook-form.
- * @param {object} allValues - All values from the form.
- * @returns {object} An object containing only the changed values.
  */
 const getDirtyValues = (dirtyFields, allValues) => {
   const dirtyValues = {};
@@ -87,14 +92,59 @@ const getDirtyValues = (dirtyFields, allValues) => {
 // --- General Settings Form ---
 const GeneralSettingsForm = ({ userData, onUpdate }) => {
   const [avatarFile, setAvatarFile] = useState(null);
-  const [avatarPreview, setAvatarPreview] = useState(userData?.avatar_key ? `${MEDIA_BASE_URL}${userData.avatar_key}` : '');
+  const [avatarUrl, setAvatarUrl] = useState('');
+  const [avatarPreview, setAvatarPreview] = useState('');
+
+  const positionOptions = [
+    'Абитуриент на Мед-универ',
+    'Студент медицинской школы/бакалавриат',
+    'Интерн',
+    'Резидент/ординатор (студент узкой специальности)',
+    'Медсестра/медбрат',
+    'Лицензированный врач',
+    'Исследователь/научный сотрудник',
+    'Другое',
+  ];
+
+  const subPositionOptions = [
+    'Общественное здравоохранение',
+    'Политика',
+    'Менеджмент',
+    'Врач на пенсии',
+  ];
 
   const methods = useForm({
     resolver: zodResolver(GeneralInfoSchema),
     defaultValues: userData,
   });
 
-  const { handleSubmit, formState: { isSubmitting, isDirty } } = methods;
+  const { watch, handleSubmit, setValue, formState: { isSubmitting, dirtyFields } } = methods;
+
+  const selectedPosition = watch('bio.position');
+
+  // Effect to handle conditional logic for sub_position
+  useEffect(() => {
+    // If position is 'Другое', clear the sub_position
+    if (selectedPosition === 'Другое') {
+      if (methods.getValues('bio.sub_position') !== null) {
+        setValue('bio.sub_position', null, { shouldDirty: true });
+      }
+    }
+  }, [selectedPosition, setValue, methods]);
+
+  useEffect(() => {
+    const fetchAvatar = async () => {
+      if (userData?.avatar_key) {
+        try {
+          const response = await axiosCopy.get('/file/url', { params: { key: userData.avatar_key } });
+          setAvatarUrl(response.data);
+        } catch (error) {
+          console.error("Failed to fetch avatar URL:", error);
+        }
+      }
+    };
+    fetchAvatar();
+  }, [userData?.avatar_key]);
 
   const handleAvatarChange = (event) => {
     const file = event.target.files[0];
@@ -105,10 +155,11 @@ const GeneralSettingsForm = ({ userData, onUpdate }) => {
   };
 
   const onFormSubmit = handleSubmit(async (data) => {
-    // We need to get dirty fields from the form state directly
-    const changedInfo = getDirtyValues(methods.formState.dirtyFields, data);
+    const changedInfo = getDirtyValues(dirtyFields, data);
     await onUpdate(changedInfo, avatarFile);
   });
+
+  const displayUrl = avatarPreview || avatarUrl;
 
   return (
     <Form methods={methods} onSubmit={onFormSubmit}>
@@ -125,7 +176,7 @@ const GeneralSettingsForm = ({ userData, onUpdate }) => {
                 </IconButton>
               }
             >
-              <Avatar src={avatarPreview} sx={{ width: 128, height: 128 }} />
+              <Avatar src={displayUrl} sx={{ width: 128, height: 128 }} />
             </Badge>
             <Typography variant="caption" color="text.secondary" sx={{ mt: 1, display: 'block' }}>
               Разрешенные форматы: *.jpeg, *.jpg, *.png, *.gif
@@ -151,12 +202,29 @@ const GeneralSettingsForm = ({ userData, onUpdate }) => {
                 <Field.Text name="bio.country" label="Страна" />
                 <Field.Text name="bio.city" label="Город" />
               </Stack>
+              <Field.Select name="bio.position" label="Должность">
+                {positionOptions.map((option) => (
+                  <MenuItem key={option} value={option}>
+                    {option}
+                  </MenuItem>
+                ))}
+              </Field.Select>
+
+              {selectedPosition !== 'Другое' && (
+                <Field.Select name="bio.sub_position" label="Под-должность">
+                  {subPositionOptions.map((option) => (
+                    <MenuItem key={option} value={option}>
+                      {option}
+                    </MenuItem>
+                  ))}
+                </Field.Select>
+              )}
             </Stack>
           </Card>
         </Grid>
       </Grid>
       <Stack alignItems="flex-end" sx={{ mt: 3 }}>
-        <LoadingButton type="submit" variant="contained" loading={isSubmitting} disabled={!isDirty && !avatarFile}>
+        <LoadingButton type="submit" variant="contained" loading={isSubmitting} disabled={!Object.keys(dirtyFields).length && !avatarFile}>
           Сохранить изменения
         </LoadingButton>
       </Stack>
@@ -227,6 +295,23 @@ const SupportForm = ({ onUpdate }) => {
   );
 };
 
+// --- Delete Account Form ---
+const DeleteAccountForm = ({ onOpenConfirm }) => (
+  <Card sx={{ p: 3 }}>
+    <Typography variant="h6" sx={{ mb: 1 }}>Удалить аккаунт</Typography>
+    <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
+      После удаления вашего аккаунта все данные будут безвозвратно утеряны. Пожалуйста, будьте уверены, что хотите продолжить.
+    </Typography>
+    <LoadingButton
+      variant="outlined"
+      color="error"
+      onClick={onOpenConfirm}
+    >
+      Удалить аккаунт
+    </LoadingButton>
+  </Card>
+);
+
 
 // --- Main Account Settings Page ---
 export const AccountSettingsPage = () => {
@@ -235,17 +320,25 @@ export const AccountSettingsPage = () => {
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
   const [currentTab, setCurrentTab] = useState('general');
+  const [isConfirmOpen, setIsConfirmOpen] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
   const { fetchUser } = useAppStore();
 
   const fetchInitialData = useCallback(async () => {
     setIsLoading(true);
     try {
       const response = await axiosCopy.get('/user/me');
-      // Sanitize data to prevent uncontrolled -> controlled input error
       const user = response.data;
-      const sanitizedBio = {};
-      for (const key in user.bio) {
-        sanitizedBio[key] = user.bio[key] ?? '';
+
+      const position = user.bio?.position ?? 'Абитуриент на Мед-универ';
+      const sub_position = position !== 'Другое' ? (user.bio?.sub_position ?? 'Общественное здравоохранение') : null;
+
+      const sanitizedBio = { ...user.bio, position, sub_position };
+
+      for (const key in sanitizedBio) {
+        if (sanitizedBio[key] === null) {
+          sanitizedBio[key] = '';
+        }
       }
       const sanitizedUser = { ...user, bio: sanitizedBio };
       for (const key in sanitizedUser) {
@@ -295,13 +388,13 @@ export const AccountSettingsPage = () => {
 
       if (infoUpdated || avatarUpdated) {
         setSuccess('Данные успешно обновлены!');
-        fetchUser(); // Refresh user data in global store
-        fetchInitialData(); // Refetch data for the form
+        fetchUser();
+        fetchInitialData();
       } else {
         setSuccess('Нет изменений для сохранения.');
       }
     } catch (err) {
-      // setError('Ошибка при обновлении данных.');
+      // setError(err.response?.data?.detail || 'Ошибка при обновлении данных.');
     }
   };
 
@@ -322,7 +415,7 @@ export const AccountSettingsPage = () => {
     setSuccess('');
     setError('');
     try {
-      await axiosCopy.post('/support/', { message: data.message });
+      await axiosCopy.post('/support/', { message_text: data.message });
       setSuccess('Ваше сообщение отправлено в поддержку!');
       return true;
     } catch (err) {
@@ -331,17 +424,50 @@ export const AccountSettingsPage = () => {
     }
   };
 
+  const handleDeleteAccount = async () => {
+    setIsDeleting(true);
+    setError('');
+    try {
+      await axiosCopy.delete('/user/me');
+      setSuccess('Ваш аккаунт был успешно удален.');
+      // Here you would typically trigger a logout and redirect the user.
+      // For example: logout(); router.push('/login');
+    } catch (err) {
+      setError(err.response?.data?.detail || 'Не удалось удалить аккаунт.');
+    } finally {
+      setIsDeleting(false);
+      setIsConfirmOpen(false);
+    }
+  };
+
   const TABS = [
     { value: 'general', label: 'Общие', icon: <Iconify icon="solar:user-id-bold" /> },
     { value: 'security', label: 'Безопасность', icon: <Iconify icon="solar:lock-password-bold" /> },
     { value: 'support', label: 'Поддержка', icon: <Iconify icon="solar:help-bold" /> },
+    { value: 'delete', label: 'Удалить аккаунт', icon: <Iconify icon="solar:trash-bin-trash-bold" /> },
   ];
 
   return (
     <DashboardContent>
       <Typography variant="h4" sx={{ mb: 3 }}>Настройки аккаунта</Typography>
       <Tabs value={currentTab} onChange={handleTabChange} sx={{ mb: 3 }}>
-        {TABS.map((tab) => <Tab key={tab.value} value={tab.value} icon={tab.icon} label={tab.label} iconPosition="start" />)}
+        {TABS.map((tab) => (
+          <Tab
+            key={tab.value}
+            value={tab.value}
+            icon={tab.icon}
+            label={tab.label}
+            iconPosition="start"
+            sx={{
+              ...(tab.value === 'delete' && {
+                color: 'error.main',
+                '&.Mui-selected': {
+                  color: 'error.main',
+                },
+              }),
+            }}
+          />
+        ))}
       </Tabs>
 
       {error && <Alert severity="error" sx={{ mb: 3, mt: 2 }} onClose={() => setError('')}>{error}</Alert>}
@@ -354,8 +480,24 @@ export const AccountSettingsPage = () => {
           {currentTab === 'general' && userData && <GeneralSettingsForm userData={userData} onUpdate={handleUpdateGeneralInfo} />}
           {currentTab === 'security' && <SecuritySettingsForm onUpdate={handleUpdatePassword} />}
           {currentTab === 'support' && <SupportForm onUpdate={handleSendSupportMessage} />}
+          {currentTab === 'delete' && <DeleteAccountForm onOpenConfirm={() => setIsConfirmOpen(true)} />}
         </Box>
       )}
+
+      <Dialog open={isConfirmOpen} onClose={() => setIsConfirmOpen(false)}>
+        <DialogTitle>Подтвердите удаление аккаунта</DialogTitle>
+        <DialogContent>
+          <DialogContentText>
+            Вы уверены, что хотите удалить свой аккаунт? Это действие необратимо, и все ваши данные будут потеряны.
+          </DialogContentText>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setIsConfirmOpen(false)}>Отмена</Button>
+          <LoadingButton onClick={handleDeleteAccount} color="error" loading={isDeleting}>
+            Удалить
+          </LoadingButton>
+        </DialogActions>
+      </Dialog>
     </DashboardContent>
   );
 };

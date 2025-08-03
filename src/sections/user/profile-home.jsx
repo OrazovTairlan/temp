@@ -21,10 +21,11 @@ import { Iconify } from 'src/components/iconify';
 
 import { ProfilePostItem } from './profile-post-item';
 import { axiosCopy, useAppStore } from '../../store/useBoundStore.js';
+import { useRouter } from '../../routes/hooks/index.js';
 
 // ----------------------------------------------------------------------
 
-export function ProfileHome({posts}) {
+export function ProfileHome({ posts }) {
   const { user } = useAppStore();
   const fileRef = useRef(null);
 
@@ -41,12 +42,13 @@ export function ProfileHome({posts}) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState('');
 
-
   // --- Function to fetch user posts ---
   const fetchUserPosts = useCallback(async () => {
     setIsLoadingPosts(true);
     try {
-      const response = await axiosCopy.get('/user/me/posts?filter=recent&order=desc&page=1&size=10');
+      const response = await axiosCopy.get(
+        '/user/me/posts?filter=recent&order=desc&page=1&size=10'
+      );
       setUserPosts(response.data); // Store fetched posts in state
     } catch (err) {
       console.error('Failed to fetch user posts:', err);
@@ -56,12 +58,14 @@ export function ProfileHome({posts}) {
     }
   }, []); // useCallback with empty dependency array
 
+  const handleDeletePost = (postIdToDelete) => {
+    setUserPosts((currentPosts) => currentPosts.filter((post) => post.id !== postIdToDelete));
+  };
 
   // --- Fetch posts on component mount ---
   useEffect(() => {
     fetchUserPosts();
   }, [fetchUserPosts]); // Effect depends on the fetch function
-
 
   const handleAttach = useCallback(() => {
     if (fileRef.current) {
@@ -71,12 +75,12 @@ export function ProfileHome({posts}) {
 
   const handleFileChange = (event) => {
     const files = Array.from(event.target.files);
-    setSelectedFiles(prevFiles => [...prevFiles, ...files]);
+    setSelectedFiles((prevFiles) => [...prevFiles, ...files]);
     event.target.value = null;
   };
 
   const handleRemoveImage = (indexToRemove) => {
-    setSelectedFiles(prevFiles => prevFiles.filter((_, index) => index !== indexToRemove));
+    setSelectedFiles((prevFiles) => prevFiles.filter((_, index) => index !== indexToRemove));
   };
 
   const handleHashtagKeyDown = (event) => {
@@ -90,6 +94,13 @@ export function ProfileHome({posts}) {
     }
   };
 
+  const router = useRouter(); // Make sure you have this in your component
+
+  const handleNavigate = (id) => {
+    // Replace with the actual path to the user's personal info page
+    router.push('/dashboard/user/personal-profile/' + id);
+  };
+
   const handleRemoveHashtag = (tagToRemove) => {
     setHashtags(hashtags.filter((tag) => tag !== tagToRemove));
   };
@@ -101,9 +112,9 @@ export function ProfileHome({posts}) {
     const formData = new FormData();
     formData.append('title', postTitle);
     formData.append('content', postContent);
-    const formattedHashtags = hashtags.map(tag => `#${tag}`).join(',');
+    const formattedHashtags = hashtags.map((tag) => `#${tag}`).join(',');
     formData.append('hashtags', formattedHashtags);
-    selectedFiles.forEach(file => {
+    selectedFiles.forEach((file) => {
       formData.append('medias', file);
     });
 
@@ -122,7 +133,6 @@ export function ProfileHome({posts}) {
 
       // --- Refetch posts to show the new one ---
       await fetchUserPosts();
-
     } catch (err) {
       console.error('Failed to create post:', err);
       setError(err.response?.data?.message || 'Не удалось опубликовать пост.');
@@ -131,33 +141,50 @@ export function ProfileHome({posts}) {
     }
   };
 
-
   if (!user) {
     return (
-      <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>
+      <Box
+        sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}
+      >
         <CircularProgress />
       </Box>
     );
   }
 
   const renderFollows = (
-    <Card sx={{ py: 3, textAlign: 'center', typography: 'h4' }}>
-      <Stack
-        direction="row"
-        divider={<Divider orientation="vertical" flexItem sx={{ borderStyle: 'dashed' }} />}
-      >
-        <Stack width={1}>
-          {fNumber(user.followers_count)}
-          <Box component="span" sx={{ color: 'text.secondary', typography: 'body2' }}>
-            Подписчики
-          </Box>
+    <Card sx={{ p: 3, textAlign: 'center' }}>
+      <Stack spacing={2}>
+        {/* Existing Follower/Following Count */}
+        <Stack
+          direction="row"
+          divider={<Divider orientation="vertical" flexItem sx={{ borderStyle: 'dashed' }} />}
+          sx={{ typography: 'h4' }}
+        >
+          <Stack width={1}>
+            {fNumber(user.followers_count)}
+            <Box component="span" sx={{ color: 'text.secondary', typography: 'body2' }}>
+              Подписчики
+            </Box>
+          </Stack>
+          <Stack width={1}>
+            {fNumber(user.followings_count)}
+            <Box component="span" sx={{ color: 'text.secondary', typography: 'body2' }}>
+              Подписки
+            </Box>
+          </Stack>
         </Stack>
-        <Stack width={1}>
-          {fNumber(user.followings_count)}
-          <Box component="span" sx={{ color: 'text.secondary', typography: 'body2' }}>
-            Подписки
-          </Box>
-        </Stack>
+
+        {/* New Button */}
+        <Button
+          fullWidth
+          variant="outlined"
+          color="inherit"
+          onClick={() => {
+            handleNavigate(user.id);
+          }}
+        >
+          Просмотр личной информации
+        </Button>
       </Stack>
     </Card>
   );
@@ -174,7 +201,8 @@ export function ProfileHome({posts}) {
           <Box sx={{ typography: 'body2' }}>
             {`Живет в `}
             <Link variant="subtitle2" color="inherit">
-              {[user.bio?.city, user.bio?.country].filter(Boolean).join(', ') || 'Местоположение не указано'}
+              {[user.bio?.city, user.bio?.country].filter(Boolean).join(', ') ||
+                'Местоположение не указано'}
             </Link>
           </Box>
         </Stack>
@@ -196,7 +224,9 @@ export function ProfileHome({posts}) {
             <Iconify icon="solar:notebook-bold" width={24} />
             <Box sx={{ typography: 'body2' }}>
               {`Специализация: `}
-              <Link variant="subtitle2" color="inherit">{user.bio.specialization}</Link>
+              <Link variant="subtitle2" color="inherit">
+                {user.bio.specialization}
+              </Link>
             </Box>
           </Stack>
         )}
@@ -255,9 +285,12 @@ export function ProfileHome({posts}) {
                 size="small"
                 onClick={() => handleRemoveImage(index)}
                 sx={{
-                  position: 'absolute', top: 0, right: 0,
-                  bgcolor: 'rgba(0, 0, 0, 0.5)', color: 'white',
-                  '&:hover': { bgcolor: 'rgba(0, 0, 0, 0.7)' }
+                  position: 'absolute',
+                  top: 0,
+                  right: 0,
+                  bgcolor: 'rgba(0, 0, 0, 0.5)',
+                  color: 'white',
+                  '&:hover': { bgcolor: 'rgba(0, 0, 0, 0.7)' },
                 }}
               >
                 <Iconify icon="eva:close-fill" />
@@ -317,7 +350,7 @@ export function ProfileHome({posts}) {
             </Box>
           ) : (
             userPosts.map((post) => (
-              <ProfilePostItem key={post.id} post={post} />
+              <ProfilePostItem key={post.id} onDelete={handleDeletePost} post={post} />
             ))
           )}
         </Stack>

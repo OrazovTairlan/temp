@@ -129,15 +129,15 @@ export function JwtSignInView() {
     <Stack spacing={3}>
       <Field.Text name="username" label="Логин" InputLabelProps={{ shrink: true }} />
       <Stack spacing={1.5}>
-        {/* <Link */}
-        {/*   component={RouterLink} */}
-        {/*   href="/auth/jwt/reset" */}
-        {/*   variant="body2" */}
-        {/*   color="inherit" */}
-        {/*   sx={{ alignSelf: 'flex-end' }} */}
-        {/* > */}
-        {/*   Забыли пароль? */}
-        {/* </Link> */}
+        <Link
+          component={RouterLink}
+          href="/auth/jwt/reset"
+          variant="body2"
+          color="inherit"
+          sx={{ alignSelf: 'flex-end' }}
+        >
+          Забыли пароль?
+        </Link>
         <Field.Text
           name="password"
           label="Пароль"

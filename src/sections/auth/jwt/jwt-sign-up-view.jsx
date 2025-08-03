@@ -1,16 +1,15 @@
-import { z as zod } from 'zod';
+/* eslint-disable */
 import { useState } from 'react';
+import { z as zod } from 'zod';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 
-import Box from '@mui/material/Box';
-import Link from '@mui/material/Link';
 import Alert from '@mui/material/Alert';
 import Stack from '@mui/material/Stack';
-import Button from '@mui/material/Button';
-import IconButton from '@mui/material/IconButton';
 import Typography from '@mui/material/Typography';
 import LoadingButton from '@mui/lab/LoadingButton';
+import Link from '@mui/material/Link';
+import IconButton from '@mui/material/IconButton';
 import InputAdornment from '@mui/material/InputAdornment';
 
 import { paths } from 'src/routes/paths';
@@ -22,10 +21,11 @@ import { useBoolean } from 'src/hooks/use-boolean';
 import { Iconify } from 'src/components/iconify';
 import { Form, Field } from 'src/components/hook-form';
 import { axiosCopy } from '../../../store/useBoundStore.js';
+import MenuItem from '@mui/material/MenuItem';
 
 // ----------------------------------------------------------------------
 
-// 1. Zod schema updated to match the new registration fields with Russian messages.
+// Zod schema updated for conditional logic
 export const RegistrationSchema = zod.object({
   login: zod.string().min(1, { message: 'Логин обязателен!' }),
   password: zod
@@ -38,12 +38,13 @@ export const RegistrationSchema = zod.object({
     .email({ message: 'Неверный формат email адреса!' }),
   firstname: zod.string().min(1, { message: 'Имя обязательно!' }),
   surname: zod.string().min(1, { message: 'Фамилия обязательна!' }),
-  secondname: zod.string().optional(), // Отчество не обязательно
+  secondname: zod.string().optional(),
   birthday: zod.string().min(1, { message: 'Дата рождения обязательна!' }),
   country: zod.string().min(1, { message: 'Страна обязательна!' }),
   city: zod.string().min(1, { message: 'Город обязателен!' }),
   position: zod.string().min(1, { message: 'Должность обязательна!' }),
-  sub_position: zod.string().min(1, { message: 'Под-должность обязательна!' }),
+  // sub_position is now optional as it's conditional
+  sub_position: zod.string().optional(),
   specialization: zod.string().min(1, { message: 'Специализация обязательна!' }),
 });
 
@@ -55,7 +56,24 @@ export function JwtSignUpView() {
   const [errorMsg, setErrorMsg] = useState('');
   const [successMsg, setSuccessMsg] = useState('');
 
-  // 2. Default values updated for the new form fields.
+  const positionOptions = [
+    'Абитуриент на Мед-универ',
+    'Студент медицинской школы/бакалавриат',
+    'Интерн',
+    'Резидент/ординатор (студент узкой специальности)',
+    'Медсестра/медбрат',
+    'Лицензированный врач',
+    'Исследователь/научный сотрудник',
+    'Другое',
+  ];
+
+  const subPositionOptions = [
+    'Общественное здравоохранение',
+    'Политика',
+    'Менеджмент',
+    'Врач на пенсии',
+  ];
+
   const defaultValues = {
     login: '',
     password: '',
@@ -77,32 +95,38 @@ export function JwtSignUpView() {
   });
 
   const {
+    watch,
     handleSubmit,
     formState: { isSubmitting },
   } = methods;
 
-  // 3. onSubmit now constructs the payload and makes a POST request.
+  // Watch the value of the 'position' field to conditionally show 'sub_position'
+  const selectedPosition = watch('position');
+
   const onSubmit = handleSubmit(async (data) => {
     setErrorMsg('');
     setSuccessMsg('');
     try {
-      // The payload is the 'data' object from the form, which already matches the API structure.
-      console.log('Sending data to API:', data);
+      const payload = { ...data };
 
-      // Replace '/api/register' with your actual registration endpoint
-      const response = await axiosCopy.post('/register', data);
+      // If position is not 'Другое', remove sub_position from the payload
+      if (payload.position !== 'Другое') {
+        delete payload.sub_position;
+      }
 
-      console.log('API Response:', response.data);
+      console.log('Sending data to API:', payload);
+
+      await axiosCopy.post('/register', payload);
+
       setSuccessMsg('Регистрация прошла успешно! Вы будете перенаправлены.');
 
-      // Redirect on success after a short delay
       setTimeout(() => {
         router.push(paths.auth.jwt.signIn);
       }, 2000);
     } catch (error) {
       console.error('Registration failed:', error);
       const message =
-        error.response?.data?.message || error.message || 'Произошла ошибка при регистрации.';
+        error.response?.data?.detail || error.message || 'Произошла ошибка при регистрации.';
       setErrorMsg(message);
     }
   });
@@ -121,7 +145,6 @@ export function JwtSignUpView() {
     </Stack>
   );
 
-  // 4. Form fields are rendered according to the new requirements.
   const renderForm = (
     <Stack spacing={3}>
       <Field.Text name="login" label="Логин" InputLabelProps={{ shrink: true }} />
@@ -163,8 +186,26 @@ export function JwtSignUpView() {
         <Field.Text name="city" label="Город" InputLabelProps={{ shrink: true }} />
       </Stack>
 
-      <Field.Text name="position" label="Должность" InputLabelProps={{ shrink: true }} />
-      <Field.Text name="sub_position" label="Под-должность" InputLabelProps={{ shrink: true }} />
+      {/* Position is now a Select dropdown */}
+      <Field.Select name="position" label="Должность">
+        {positionOptions.map((option) => (
+          <MenuItem key={option} value={option}>
+            {option}
+          </MenuItem>
+        ))}
+      </Field.Select>
+
+      {/* Conditionally render sub_position based on the selected position */}
+      {selectedPosition === 'Другое' && (
+        <Field.Select name="sub_position" label="Под-должность">
+          {subPositionOptions.map((option) => (
+            <MenuItem key={option} value={option}>
+              {option}
+            </MenuItem>
+          ))}
+        </Field.Select>
+      )}
+
       <Field.Text name="specialization" label="Специализация" InputLabelProps={{ shrink: true }} />
 
       <LoadingButton

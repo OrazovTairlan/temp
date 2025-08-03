@@ -8,6 +8,7 @@
 export const createAuthSlice = (set) => ({
   // ## STATE ##
   user: null,
+  refreshToken: null,
   token: null,
   isInitialized: false, // Becomes true after the initial session check is complete
 
@@ -21,6 +22,12 @@ export const createAuthSlice = (set) => ({
   setUser: (user) => {
     set({
       user: user,
+    });
+  },
+
+  setRefreshToken: (token) => {
+    set({
+      refreshToken: token,
     });
   },
 
@@ -46,6 +53,7 @@ export const createAuthSlice = (set) => ({
     set({
       user: null,
       token: null,
+      refreshToken: null,
       isInitialized: true,
     });
   },

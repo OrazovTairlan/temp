@@ -125,7 +125,7 @@ export function KanbanColumnToolBar({
             sx={{ color: 'error.main' }}
           >
             <Iconify icon="solar:trash-bin-trash-bold" />
-            Delete
+            Удалить
           </MenuItem>
         </MenuList>
       </CustomPopover>
@@ -133,7 +133,7 @@ export function KanbanColumnToolBar({
       <ConfirmDialog
         open={confirmDialog.value}
         onClose={confirmDialog.onFalse}
-        title="Delete"
+        title="Удалить"
         content={
           <>
             Are you sure want to delete column?

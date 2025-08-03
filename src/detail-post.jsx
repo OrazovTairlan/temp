@@ -3,6 +3,7 @@ import { Helmet } from 'react-helmet-async';
 import { CONFIG } from 'src/config-global';
 import { BioForm } from './bio-fill-view.jsx';
 import { useAppStore } from './store/useBoundStore.js';
+import { PostPage } from './detail-post-view.jsx';
 
 // ----------------------------------------------------------------------
 
@@ -16,7 +17,7 @@ export default function Page() {
         <title> {metadata.title}</title>
       </Helmet>
 
-      <BioForm userId={user?.id} />
+      <PostPage />
     </>
   );
 }
