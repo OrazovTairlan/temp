@@ -182,17 +182,36 @@ const CommentItem = ({ comment, onCommentDelete, onUserClick }) => {
   };
 
   const handleCommentReaction = async (reactionType) => {
-    // ... (Your existing comment reaction logic)
+    const originalState = { ...commentReactions };
+    setCommentReactions((prev) => {
+      const isTogglingOff = prev.userChoice === reactionType;
+      const newCounts = { likes: prev.likes, dislikes: prev.dislikes };
+      if (isTogglingOff) {
+        newCounts[reactionType === 'like' ? 'likes' : 'dislikes'] -= 1;
+      } else {
+        if (prev.userChoice) {
+          newCounts[reactionType === 'like' ? 'dislikes' : 'likes'] -= 1;
+        }
+        newCounts[reactionType === 'like' ? 'likes' : 'dislikes'] += 1;
+      }
+      return { ...newCounts, userChoice: isTogglingOff ? null : reactionType };
+    });
+
+    try {
+      await axiosCopy.post(`/reaction/${reactionType}/${comment.id}`, null, {
+        params: { target: 'COMMENT' },
+      });
+    } catch (error) {
+      console.error(`Failed to ${reactionType} comment`, error);
+      setCommentReactions(originalState);
+    }
   };
 
   return (
     <Stack key={comment.id} spacing={0.5}>
       <Stack direction="row" spacing={2}>
         <Link onClick={() => onUserClick(comment.author.id)} sx={{ cursor: 'pointer' }}>
-          <DynamicAvatar
-            avatarKey={comment.author.avatar_key}
-            alt={authorName}
-          />
+          <DynamicAvatar avatarKey={comment.author.avatar_key} alt={authorName} />
         </Link>
         <Paper sx={{ p: 1.5, flexGrow: 1, bgcolor: 'background.neutral' }}>
           <Stack sx={{ mb: 0.5 }} direction="row" justifyContent="space-between">
@@ -220,7 +239,7 @@ const CommentItem = ({ comment, onCommentDelete, onUserClick }) => {
                   >
                     <MenuItem onClick={handleDeleteComment} sx={{ color: 'error.main' }}>
                       <Iconify icon="solar:trash-bin-trash-bold" sx={{ mr: 1 }} />
-                      Delete
+                      Удалить
                     </MenuItem>
                   </Menu>
                 </>
@@ -233,31 +252,24 @@ const CommentItem = ({ comment, onCommentDelete, onUserClick }) => {
         </Paper>
       </Stack>
       <Stack direction="row" alignItems="center" sx={{ pl: '56px' }}>
-        <IconButton size="small" onClick={() => handleCommentReaction(comment.id, 'like')}>
+        <IconButton size="small" onClick={() => handleCommentReaction('like')}>
           <Iconify
             icon="solar:heart-bold"
             color={commentReactions.userChoice === 'like' ? 'error.main' : 'text.disabled'}
           />
         </IconButton>
         <Typography variant="caption">{fShortenNumber(commentReactions.likes)}</Typography>
-        <IconButton
-          size="small"
-          sx={{ ml: 1 }}
-          onClick={() => handleCommentReaction(comment.id, 'dislike')}
-        >
+        <IconButton size="small" sx={{ ml: 1 }} onClick={() => handleCommentReaction('dislike')}>
           <Iconify
             icon="solar:dislike-bold"
-            color={
-              commentReactions.userChoice === 'dislike' ? 'primary.main' : 'text.disabled'
-            }
+            color={commentReactions.userChoice === 'dislike' ? 'primary.main' : 'text.disabled'}
           />
         </IconButton>
         <Typography variant="caption">{fShortenNumber(commentReactions.dislikes)}</Typography>
       </Stack>
     </Stack>
-  )
-}
-
+  );
+};
 
 export function ProfilePostItem({ post, onDelete }) {
   const router = useRouter();
@@ -287,8 +299,8 @@ export function ProfilePostItem({ post, onDelete }) {
       try {
         const response = await axiosCopy.get(`/post/{id}/comments`, {
           params: {
-            post_id: post.id
-          }
+            post_id: post.id,
+          },
         });
         setComments(response.data);
       } catch (error) {
@@ -327,8 +339,8 @@ export function ProfilePostItem({ post, onDelete }) {
   };
 
   const handleCommentDelete = (commentId) => {
-    setComments(currentComments => currentComments.filter(c => c.id !== commentId));
-    setCommentCount(prev => prev - 1);
+    setComments((currentComments) => currentComments.filter((c) => c.id !== commentId));
+    setCommentCount((prev) => prev - 1);
   };
 
   const handleToggleComments = useCallback(() => setShowComments((prev) => !prev), []);
@@ -348,7 +360,32 @@ export function ProfilePostItem({ post, onDelete }) {
   }, [newComment, post.id, fetchComments]);
 
   const handlePostReaction = async (reactionType) => {
-    // ... (Your existing post reaction logic)
+    const originalState = { ...postReaction };
+    setPostReaction((prevState) => {
+      const isTogglingOff = prevState.userChoice === reactionType;
+      const newCounts = {
+        likes: prevState.likes,
+        dislikes: prevState.dislikes,
+      };
+      if (isTogglingOff) {
+        newCounts[reactionType === 'like' ? 'likes' : 'dislikes'] -= 1;
+      } else {
+        if (prevState.userChoice) {
+          newCounts[reactionType === 'like' ? 'dislikes' : 'likes'] -= 1;
+        }
+        newCounts[reactionType === 'like' ? 'likes' : 'dislikes'] += 1;
+      }
+      return { ...newCounts, userChoice: isTogglingOff ? null : reactionType };
+    });
+
+    try {
+      await axiosCopy.post(`/reaction/${reactionType}/${post.id}`, null, {
+        params: { target: 'POST' },
+      });
+    } catch (error) {
+      console.error(`Failed to ${reactionType} post:`, error);
+      setPostReaction(originalState);
+    }
   };
 
   // --- Render Functions ---

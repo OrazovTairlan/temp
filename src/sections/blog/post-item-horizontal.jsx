@@ -158,7 +158,7 @@ export function PostItemHorizontal({ post }) {
             sx={{ color: 'error.main' }}
           >
             <Iconify icon="solar:trash-bin-trash-bold" />
-            Delete
+            Удалить
           </MenuItem>
         </MenuList>
       </CustomPopover>

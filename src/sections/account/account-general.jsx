@@ -120,7 +120,7 @@ export function AccountGeneral() {
             />
 
             <Button variant="soft" color="error" sx={{ mt: 3 }}>
-              Delete user
+             Удалить аккаунт
             </Button>
           </Card>
         </Grid>
