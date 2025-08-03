@@ -62,14 +62,6 @@ const UserRow = ({ user, onFollowToggle, isUpdating }) => {
         </Stack>
 
         <Stack spacing={1} sx={{ minWidth: 140 }}>
-          <LoadingButton
-            fullWidth
-            variant={user.is_following ? 'outlined' : 'contained'}
-            onClick={handleFollow}
-            loading={isUpdating}
-          >
-            {user.is_following ? 'Отписаться' : 'Подписаться'}
-          </LoadingButton>
           <Button
             fullWidth
             variant="outlined"
