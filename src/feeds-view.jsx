@@ -482,9 +482,6 @@ const PostItem = ({ post, onDelete }) => {
                 >
                   {fShortenNumber(reaction.dislikes)}
                 </Button>
-                <IconButton size="small" color="secondary">
-                  <Share />
-                </IconButton>
               </Stack>
 
               {showComments && (
