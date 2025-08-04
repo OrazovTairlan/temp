@@ -34,15 +34,14 @@ export function ProfileCover({ name, isVerified, avatarUrl, role, coverUrl }) {
       sx={{
         height: 1,
         color: 'common.white',
-        // backgroundColor: "#68CDFF !important",
-        // ...bgGradient({
-        //   color: `0deg, ${varAlpha(theme.vars.palette.primary.darkerChannel, 0.8)}, ${varAlpha(
-        //     theme.vars.palette.primary.darkerChannel,
-        //     0.8
-        //   )}`,
-        //   // imgUrl: coverUrl,
-        // })
-        backgroundColor: "#aad0d8",
+        backgroundColor: "#68CDFF !important",
+        ...bgGradient({
+          color: `0deg, ${varAlpha(theme.vars.palette.primary.darkerChannel, 0.8)}, ${varAlpha(
+            theme.vars.palette.primary.darkerChannel,
+            0.8
+          )}`,
+          // imgUrl: coverUrl,
+        }),
       }}
     >
       <Stack
@@ -90,7 +89,7 @@ export function ProfileCover({ name, isVerified, avatarUrl, role, coverUrl }) {
               {isVerified && <CheckCircleIcon sx={{ ml: 1, color: 'primary.main' }} />}
             </Typography>
           }
-          secondary={role == "admin" ? "Администратор" : ""}
+          secondary={role == 'admin' ? 'Администратор' : ''}
           secondaryTypographyProps={{
             mt: 0.5,
             color: 'inherit',

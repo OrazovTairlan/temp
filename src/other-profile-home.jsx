@@ -16,13 +16,17 @@ import { LoadingButton } from '@mui/lab';
 
 import { fNumber } from 'src/utils/format-number';
 import { Iconify } from 'src/components/iconify';
-import { axiosCopy } from './store/useBoundStore.js';
+import { axiosCopy, useAppStore } from './store/useBoundStore.js';
 import { ProfilePostItem } from './sections/user/profile-post-item.jsx';
 
 // ----------------------------------------------------------------------
 
 export function OtherProfileHome({ onVerify }) {
   const { id } = useParams(); // Changed to 'id' to match your latest code
+
+
+
+  const {user} = useAppStore()
   const login = id;
 
   const [profileUser, setProfileUser] = useState(null);
@@ -164,7 +168,7 @@ export function OtherProfileHome({ onVerify }) {
         </LoadingButton>
       </Box>
 
-      {profileUser.role == 'admin' ? (
+      {user.role == 'admin' ? (
         <Box sx={{ mt: 3, px: 2 }}>
           <LoadingButton
             fullWidth
