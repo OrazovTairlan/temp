@@ -13,6 +13,7 @@ import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 
 // Custom theme styles (assumed to exist)
 import { varAlpha, bgGradient } from 'src/theme/styles';
+import Chip from '@mui/material/Chip';
 
 // ----------------------------------------------------------------------
 
@@ -34,7 +35,7 @@ export function ProfileCover({ name, isVerified, avatarUrl, role, coverUrl }) {
       sx={{
         height: 1,
         color: 'common.white',
-        backgroundColor: "#68CDFF !important",
+        backgroundColor: '#68CDFF !important',
         ...bgGradient({
           color: `0deg, ${varAlpha(theme.vars.palette.primary.darkerChannel, 0.8)}, ${varAlpha(
             theme.vars.palette.primary.darkerChannel,
@@ -73,12 +74,12 @@ export function ProfileCover({ name, isVerified, avatarUrl, role, coverUrl }) {
           sx={{
             mt: 3,
             ml: { md: 3 },
-            textAlign: { xs: 'center', md: 'left' }, // Corrected from 'unset' for clarity
+            textAlign: { xs: 'center', md: 'left' },
           }}
           primary={
             <Typography
               variant="h4"
-              component="span" // Use span to avoid block element issues inside ListItemText
+              component="span"
               sx={{
                 display: 'flex',
                 alignItems: 'center',
@@ -89,17 +90,33 @@ export function ProfileCover({ name, isVerified, avatarUrl, role, coverUrl }) {
               {isVerified && <CheckCircleIcon sx={{ ml: 1, color: 'primary.main' }} />}
             </Typography>
           }
-          secondary={role.role == 'admin' ? <>
-            Администратор <br/>
-            {role.login}
-          </> : ''}
-          secondaryTypographyProps={{
-            mt: 0.5,
-            color: 'inherit',
-            component: 'span',
-            typography: 'body2',
-            sx: { opacity: 0.48 },
-          }}
+          secondary={
+            <Stack
+              direction="row"
+              spacing={1}
+              alignItems="center"
+              justifyContent={{ xs: 'center', md: 'flex-start' }}
+              sx={{ mt: 1 }}
+            >
+              <Typography variant="body2" color="text.primary"  sx={{
+                color: 'white !important',
+              }}>
+                @{role.login}
+              </Typography>
+
+              {role.role === 'admin' && (
+                <Chip
+                  label="Администратор"
+                  size="small"
+                  color="primary"
+                  variant="soft"
+                  sx={{
+                    color: 'white !important',
+                  }}
+                />
+              )}
+            </Stack>
+          }
         />
       </Stack>
     </Box>
