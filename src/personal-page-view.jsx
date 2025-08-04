@@ -31,6 +31,7 @@ import { DashboardContent } from './layouts/dashboard/index.js';
 import { axiosCopy, useAppStore } from 'src/store/useBoundStore';
 import { Iconify } from 'src/components/iconify';
 import { Form, Field } from 'src/components/hook-form';
+import { useRouter } from './routes/hooks/index.js';
 
 // --- Zod Schemas for Validation ---
 const GeneralInfoSchema = zod.object({
@@ -334,13 +335,15 @@ const DeleteAccountForm = ({ onOpenConfirm }) => (
 // --- Main Account Settings Page ---
 export const AccountSettingsPage = () => {
   const [userData, setUserData] = useState(null);
+
+  const router = useRouter();
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
   const [currentTab, setCurrentTab] = useState('general');
   const [isConfirmOpen, setIsConfirmOpen] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
-  const { user } = useAppStore();
+  const { user, logout } = useAppStore();
 
   const fetchInitialData = useCallback(async () => {
     setIsLoading(true);
@@ -452,6 +455,8 @@ export const AccountSettingsPage = () => {
     setError('');
     try {
       await axiosCopy.delete('/user/me');
+      router.push('/auth/jwt/sign-in');
+      logout();
       setSuccess('Ваш аккаунт был успешно удален.');
       // Here you would typically trigger a logout and redirect the user.
       // For example: logout(); router.push('/login');

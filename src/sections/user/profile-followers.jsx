@@ -128,7 +128,7 @@ export function ProfileFollowers() {
 
     try {
       if (isCurrentlyFollowing) {
-        await axiosCopy.post(`/user/me/unfollow/${login}`);
+        await axiosCopy.delete(`/user/me/following/${login}`);
       } else {
         await axiosCopy.post(`/user/me/follow/${login}`);
       }

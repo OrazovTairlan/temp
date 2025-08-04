@@ -183,9 +183,9 @@ const CommentItem = ({ comment, onDelete }) => {
               </Typography>
               {isAuthor && (
                 <>
-                  <IconButton size="small" onClick={handleMenuOpen}>
-                    <MoreHoriz fontSize="small" />
-                  </IconButton>
+                  {/* <IconButton size="small" onClick={handleMenuOpen}> */}
+                  {/*   <MoreHoriz fontSize="small" /> */}
+                  {/* </IconButton> */}
                   <Menu anchorEl={anchorEl} open={Boolean(anchorEl)} onClose={handleMenuClose}>
                     <MenuItem onClick={handleDelete} sx={{ color: 'error.main' }}>
                       Delete

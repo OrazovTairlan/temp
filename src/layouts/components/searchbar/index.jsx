@@ -180,17 +180,28 @@ export function Searchbar({ sx, ...other }) {
           response = await axiosCopy.get('/search/posts', { params: { q: debouncedQuery } });
         } else if (searchType === 'users') {
           response = await axiosCopy.get('/search/users', { params: { q: debouncedQuery } });
-        } else if (searchType === 'hashtags') {
+        }
+        // --- REWRITTEN HASHTAG SEARCH LOGIC ---
+        else if (searchType === 'hashtags') {
+          // 1. Extract hashtags from the query, keeping the '#' symbol.
           const tags = debouncedQuery
             .split(/[\s,]+/)
-            .filter((tag) => tag.startsWith('#'))
-            .map((tag) => tag.substring(1))
-            .filter(Boolean);
+            .filter((tag) => tag.startsWith('#') && tag.length > 1);
 
           if (tags.length > 0) {
-            const queryString = tags.map((tag) => `tags=${encodeURIComponent(tag)}`).join('&');
-            response = await axiosCopy.get(`/search/hashtags?${queryString}`);
+            // 2. Manually build the 'tags' part of the query string.
+            // Each tag becomes a 'tags=...' parameter.
+            const tagsQueryString = tags
+              .map((tag) => `tags=${encodeURIComponent(tag)}`)
+              .join('&');
+
+            // 3. Construct the full URL by combining the path, tags, and pagination.
+            const fullUrl = `/search/hashtags?${tagsQueryString}&page=1&size=10`;
+
+            // 4. Make the API call using the fully constructed URL.
+            response = await axiosCopy.get(fullUrl);
           } else {
+            // If no valid hashtags are found, do not make an API call.
             response = { data: [] };
           }
         }
@@ -202,6 +213,7 @@ export function Searchbar({ sx, ...other }) {
         setIsLoading(false);
       }
     };
+
 
     performSearch();
   }, [debouncedQuery, searchType]);

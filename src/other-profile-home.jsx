@@ -84,7 +84,7 @@ export function OtherProfileHome({ onVerify }) {
       // Update state on success
       setProfileUser((prevUser) => ({
         ...prevUser,
-        followers_count: isFollowing ? prevUser.followers_count - 1 : prevUser.followers_count + 1,
+        followers_count: isTest ? prevUser.followers_count - 1 : prevUser.followers_count + 1,
       }));
       setIsFollowing((prev) => !prev);
     } catch (err) {
@@ -108,6 +108,7 @@ export function OtherProfileHome({ onVerify }) {
       await axiosCopy.patch(`/admin/verify-user`, {
         login: login,
       });
+      window.reload();
       setIsVerified(true);
       fetchProfileData();
       onVerify();
