@@ -22,7 +22,7 @@ import { ProfileFollowers } from '../profile-followers';
 
 const TABS = [
   { value: 'profile', label: 'Профиль', icon: <Iconify icon="solar:user-id-bold" width={24} /> },
-  { value: 'followers', label: 'Подписчики', icon: <Iconify icon="solar:heart-bold" width={24} /> }
+  { value: 'followers', label: 'Подписчики', icon: <Iconify icon="solar:heart-bold" width={24} /> },
 ];
 
 // ----------------------------------------------------------------------
@@ -62,7 +62,9 @@ export function UserProfileView() {
   if (!user) {
     return (
       <DashboardContent>
-        <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '80vh' }}>
+        <Box
+          sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '80vh' }}
+        >
           <CircularProgress />
         </Box>
       </DashboardContent>
@@ -75,10 +77,7 @@ export function UserProfileView() {
     <DashboardContent>
       <CustomBreadcrumbs
         heading="Профиль"
-        links={[
-          { name: 'Пользователь', href: paths.dashboard.user.root },
-          { name: userName },
-        ]}
+        links={[{ name: 'Пользователь', href: paths.dashboard.user.root }, { name: userName }]}
         sx={{ mb: { xs: 3, md: 5 } }}
       />
 
@@ -87,6 +86,7 @@ export function UserProfileView() {
           role={user.role}
           name={userName}
           avatarUrl={avatarUrl}
+          isVerified={user.is_verified}
           coverUrl={
             'https://files.anextour.kz/Content/uploads/elfinder/ANEXKZ/news-new/kazakhstan/Depositphotos_54567813_XL.jpg'
           }
@@ -117,7 +117,6 @@ export function UserProfileView() {
       {tabs.value === 'followers' && <ProfileFollowers />}
 
       {/* {tabs.value === 'friends' && <ProfileFriends />} */}
-
     </DashboardContent>
   );
 }

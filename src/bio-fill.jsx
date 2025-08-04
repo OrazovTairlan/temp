@@ -6,7 +6,7 @@ import { useAppStore } from './store/useBoundStore.js';
 
 // ----------------------------------------------------------------------
 
-const metadata = { title: `Профиль пользователя | Панель управления - ${CONFIG.site.name}` };
+const metadata = { title: `Заполнение личной информации` };
 
 export default function Page() {
   const { user } = useAppStore();

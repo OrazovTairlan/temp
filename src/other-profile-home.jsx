@@ -21,7 +21,7 @@ import { ProfilePostItem } from './sections/user/profile-post-item.jsx';
 
 // ----------------------------------------------------------------------
 
-export function OtherProfileHome() {
+export function OtherProfileHome({ onVerify }) {
   const { id } = useParams(); // Changed to 'id' to match your latest code
   const login = id;
 
@@ -31,6 +31,9 @@ export function OtherProfileHome() {
   const [error, setError] = useState('');
   const [isFollowing, setIsFollowing] = useState(false);
   const [isFollowLoading, setIsFollowLoading] = useState(false);
+
+  const [isVerified, setIsVerified] = useState(false);
+  const [isVerifyLoading, setIsVerifyLoading] = useState(false);
 
   const fetchProfileData = useCallback(async () => {
     if (!login) return;
@@ -75,12 +78,35 @@ export function OtherProfileHome() {
         followers_count: isFollowing ? prevUser.followers_count - 1 : prevUser.followers_count + 1,
       }));
       setIsFollowing((prev) => !prev);
-
     } catch (err) {
       console.error('Failed to toggle follow:', err);
       // Optionally, show an error message to the user
     } finally {
       setIsFollowLoading(false);
+    }
+  };
+
+  const handleVerifyUser = async () => {
+    console.log(profileUser.is_verified, isVerified);
+    if (profileUser.is_verified || isVerified) {
+      return;
+    }
+    if (!profileUser) {
+      return;
+    }
+    setIsVerifyLoading(true);
+    try {
+      await axiosCopy.patch(`/admin/verify-user`, {
+        login: login,
+      });
+      setIsVerified(true);
+      fetchProfileData();
+      onVerify();
+    } catch (err) {
+      console.error('Failed to toggle follow:', err);
+      // Optionally, show an error message to the user
+    } finally {
+      setIsVerifyLoading(false);
     }
   };
 
@@ -93,11 +119,19 @@ export function OtherProfileHome() {
   }
 
   if (error) {
-    return <Alert severity="error" sx={{ m: 3 }}>{error}</Alert>;
+    return (
+      <Alert severity="error" sx={{ m: 3 }}>
+        {error}
+      </Alert>
+    );
   }
 
   if (!profileUser) {
-    return <Alert severity="warning" sx={{ m: 3 }}>Профиль не найден.</Alert>;
+    return (
+      <Alert severity="warning" sx={{ m: 3 }}>
+        Профиль не найден.
+      </Alert>
+    );
   }
 
   const renderFollows = (
@@ -129,6 +163,21 @@ export function OtherProfileHome() {
           {isFollowing ? 'Отписаться' : 'Подписаться'}
         </LoadingButton>
       </Box>
+
+      {profileUser.role == 'admin' ? (
+        <Box sx={{ mt: 3, px: 2 }}>
+          <LoadingButton
+            fullWidth
+            variant={profileUser.is_verified || isVerified ? 'outlined' : 'contained'}
+            onClick={handleVerifyUser}
+            loading={isVerifyLoading}
+          >
+            {profileUser.is_verified || isVerified
+              ? 'Верифицирован'
+              : 'Верифицировать пользователя'}
+          </LoadingButton>
+        </Box>
+      ) : null}
     </Card>
   );
 

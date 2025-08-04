@@ -6,7 +6,7 @@ import { AccountSettingsPage } from './personal-page-view.jsx';
 
 // ----------------------------------------------------------------------
 
-const metadata = { title: `Профиль пользователя | Панель управления - ${CONFIG.site.name}` };
+const metadata = { title: `Настройки страницы` };
 
 export default function Page() {
   return (

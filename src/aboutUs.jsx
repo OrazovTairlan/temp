@@ -5,7 +5,7 @@ import InterlinkedLandingPage from './aboutUs-view.jsx';
 
 // ----------------------------------------------------------------------
 
-const metadata = { title: `Профиль пользователя | Панель управления - ${CONFIG.site.name}` };
+const metadata = { title: `Манифест` };
 
 export default function Page() {
   return (

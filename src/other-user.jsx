@@ -7,7 +7,7 @@ import { OtherUserProfileView } from './other-user-view.jsx';
 
 // ----------------------------------------------------------------------
 
-const metadata = { title: `Профиль пользователя | Панель управления - ${CONFIG.site.name}` };
+const metadata = { title: `Профиль пользователя` };
 
 export default function Page() {
   return (

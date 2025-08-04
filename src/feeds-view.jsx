@@ -17,6 +17,8 @@ import {
   InputBase,
   Paper,
   Link,
+  Dialog,
+  DialogContent,
 } from '@mui/material';
 import {
   Favorite,
@@ -38,7 +40,7 @@ import { Iconify } from 'src/components/iconify';
 import { Image } from 'src/components/image';
 
 // --- Reusable Component for fetching and displaying any media from a key ---
-const DynamicMedia = ({ fileKey, fileType, renderAs = 'image', alt = '', sx = {} }) => {
+const DynamicMedia = ({ fileKey, fileType, renderAs = 'image', alt = '', sx = {}, onImageClick }) => {
   const [fileUrl, setFileUrl] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
@@ -89,7 +91,19 @@ const DynamicMedia = ({ fileKey, fileType, renderAs = 'image', alt = '', sx = {}
   }
 
   if (fileType && fileType.startsWith('image/')) {
-    return <Image alt={alt} src={fileUrl} sx={{ borderRadius: 1.5, ...sx }} />;
+    const isClickable = typeof onImageClick === 'function';
+    return (
+      <Box
+        onClick={isClickable ? () => onImageClick(fileUrl) : undefined}
+        sx={{
+          cursor: isClickable ? 'pointer' : 'default',
+          '&:hover': isClickable ? { opacity: 0.85 } : {},
+          transition: (theme) => theme.transitions.create('opacity'),
+        }}
+      >
+        <Image alt={alt} src={fileUrl} sx={{ borderRadius: 1.5, display: 'block', ...sx }} />
+      </Box>
+    );
   }
 
   return (
@@ -107,7 +121,7 @@ const DynamicMedia = ({ fileKey, fileType, renderAs = 'image', alt = '', sx = {}
 
 // --- CommentItem Component ---
 const CommentItem = ({ comment, onDelete }) => {
-  const { user } = useAppStore(); // Get current user
+  const { user } = useAppStore();
   const [reaction, setReaction] = useState({
     likes: comment.like_count || 0,
     dislikes: comment.dislike_count || 0,
@@ -124,7 +138,7 @@ const CommentItem = ({ comment, onDelete }) => {
     handleMenuClose();
     try {
       await axiosCopy.delete(`/comment/${comment.id}`);
-      onDelete(comment.id); // Notify parent to update UI
+      onDelete(comment.id);
     } catch (error) {
       console.error('Failed to delete comment', error);
     }
@@ -179,7 +193,7 @@ const CommentItem = ({ comment, onDelete }) => {
                   </IconButton>
                   <Menu anchorEl={anchorEl} open={Boolean(anchorEl)} onClose={handleMenuClose}>
                     <MenuItem onClick={handleDelete} sx={{ color: 'error.main' }}>
-                      Delete
+                      Удалить
                     </MenuItem>
                   </Menu>
                 </>
@@ -213,12 +227,13 @@ const CommentItem = ({ comment, onDelete }) => {
 
 // --- PostItem Component ---
 const PostItem = ({ post, onDelete }) => {
-  const { user } = useAppStore(); // Get current user
+  const { user } = useAppStore();
   const [showComments, setShowComments] = useState(false);
   const [comments, setComments] = useState([]);
   const [isLoadingComments, setIsLoadingComments] = useState(false);
   const [newComment, setNewComment] = useState('');
   const [anchorEl, setAnchorEl] = useState(null);
+  const [dialogImage, setDialogImage] = useState(null); // State for the image dialog
   const [reaction, setReaction] = useState({
     likes: post.like_count || 0,
     dislikes: post.dislike_count || 0,
@@ -238,6 +253,10 @@ const PostItem = ({ post, onDelete }) => {
   const authorName = `${post.author.firstname} ${post.author.surname}`;
   const isAuthor = user?.id === post.author.id;
 
+  // Handlers for the image dialog
+  const handleImageClick = (imageUrl) => setDialogImage(imageUrl);
+  const handleCloseDialog = () => setDialogImage(null);
+
   const handleMenuOpen = (event) => setAnchorEl(event.currentTarget);
   const handleMenuClose = () => setAnchorEl(null);
 
@@ -245,7 +264,7 @@ const PostItem = ({ post, onDelete }) => {
     handleMenuClose();
     try {
       await axiosCopy.delete(`/post/${post.id}`);
-      onDelete(post.id); // Notify parent to remove from feed
+      onDelete(post.id);
     } catch (error) {
       console.error('Failed to delete post', error);
     }
@@ -260,9 +279,7 @@ const PostItem = ({ post, onDelete }) => {
     setIsLoadingComments(true);
     try {
       const response = await axiosCopy.get(`/post/{id}/comments`, {
-        params: {
-          post_id: post.id,
-        },
+        params: { post_id: post.id },
       });
       setComments(response.data);
     } catch (error) {
@@ -285,7 +302,7 @@ const PostItem = ({ post, onDelete }) => {
     try {
       await axiosCopy.post(`/post/${post.id}/comment`, { comment: newComment.trim() });
       setNewComment('');
-      fetchComments(); // Refresh comments list
+      fetchComments();
     } catch (error) {
       console.error('Failed to post comment', error);
     }
@@ -351,186 +368,215 @@ const PostItem = ({ post, onDelete }) => {
   const displayedHashtags = text.isTranslated ? text.translated.hashtags : text.original.hashtags;
 
   return (
-    <Card elevation={0} sx={{ borderRadius: 0, '&:hover': { bgcolor: 'grey.50' } }}>
-      <CardContent sx={{ px: 3, py: 2 }}>
-        <Stack direction="row" spacing={2}>
-          <DynamicMedia
-            fileKey={post.author.avatar_key}
-            renderAs="avatar"
-            alt={authorName}
-            sx={{ width: 48, height: 48 }}
-          />
-          <Box sx={{ flex: 1, minWidth: 0 }}>
-            <Stack direction="row" alignItems="center" spacing={1} sx={{ mb: 1 }}>
-              <Typography variant="subtitle2" fontWeight="bold">
-                {authorName}
-              </Typography>
-              {post.author.is_verified && <Verified color="primary" sx={{ fontSize: 16 }} />}
-              <Typography variant="body2" color="text.secondary">
-                @{post.author.login}
-              </Typography>
-              <Typography variant="body2" color="text.secondary">
-                •
-              </Typography>
-              <Typography variant="body2" color="text.secondary">
-                {fToNow(post.created_at)}
-              </Typography>
-              <Box sx={{ flex: 1 }} />
-              {/* {isAuthor && ( */}
-              {/*   <> */}
-              {/*     <IconButton size="small" onClick={handleMenuOpen}> */}
-              {/*       <MoreHoriz /> */}
-              {/*     </IconButton> */}
-              {/*     <Menu anchorEl={anchorEl} open={Boolean(anchorEl)} onClose={handleMenuClose}> */}
-              {/*       <MenuItem onClick={handleDeletePost} sx={{ color: 'error.main' }}> */}
-              {/*         Delete Post */}
-              {/*       </MenuItem> */}
-              {/*     </Menu> */}
-              {/*   </> */}
-              {/* )} */}
-              <IconButton size="small" onClick={handleMenuOpen}>
-                <MoreHoriz />
-              </IconButton>
-              <Menu anchorEl={anchorEl} open={Boolean(anchorEl)} onClose={handleMenuClose}>
-                <MenuItem onClick={handleDeletePost} sx={{ color: 'error.main' }}>
-                  Delete Post
-                </MenuItem>
-              </Menu>
-            </Stack>
-
-            <Typography variant="h6" sx={{ mb: 1, fontWeight: 600 }}>
-              {displayedTitle}
-            </Typography>
-            <Typography variant="body1" sx={{ mb: 2, whiteSpace: 'pre-wrap' }}>
-              {displayedContent}
-            </Typography>
-
-            {text.isTranslating ? (
-              <Button size="small" disabled startIcon={<CircularProgress size={16} />}>
-                Translating...
-              </Button>
-            ) : text.isTranslated ? (
-              <Button size="small" onClick={handleShowOriginal} startIcon={<Translate />}>
-                Show Original
-              </Button>
-            ) : (
-              <Button size="small" onClick={handleTranslate} startIcon={<Translate />}>
-                Translate
-              </Button>
-            )}
-
-            {displayedHashtags && (
-              <Stack direction="row" flexWrap="wrap" spacing={1} sx={{ my: 2 }}>
-                {displayedHashtags
-                  .split(',')
-                  .map(
-                    (tag) =>
-                      tag && (
-                        <Chip
-                          key={tag}
-                          label={tag.startsWith('#') ? tag : `#${tag}`}
-                          size="small"
-                        />
-                      )
-                  )}
+    <>
+      <Card elevation={0} sx={{ borderRadius: 0, '&:hover': { bgcolor: 'grey.50' } }}>
+        <CardContent sx={{ px: 3, py: 2 }}>
+          <Stack direction="row" spacing={2}>
+            <DynamicMedia
+              fileKey={post.author.avatar_key}
+              renderAs="avatar"
+              alt={authorName}
+              sx={{ width: 48, height: 48 }}
+            />
+            <Box sx={{ flex: 1, minWidth: 0 }}>
+              <Stack direction="row" alignItems="center" spacing={1} sx={{ mb: 1 }}>
+                <Typography variant="subtitle2" fontWeight="bold">
+                  {authorName}
+                </Typography>
+                {post.author.is_verified && <Verified color="primary" sx={{ fontSize: 16 }} />}
+                <Typography variant="body2" color="text.secondary">
+                  @{post.author.login}
+                </Typography>
+                <Typography variant="body2" color="text.secondary">
+                  •
+                </Typography>
+                <Typography variant="body2" color="text.secondary">
+                  {fToNow(post.created_at)}
+                </Typography>
+                <Box sx={{ flex: 1 }} />
               </Stack>
-            )}
 
-            {post.medias && post.medias.length > 0 && (
-              <Box
-                sx={{
-                  display: 'grid',
-                  gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))',
-                  gap: 1,
-                  mb: 2,
-                }}
-              >
-                {post.medias.map((media) => (
-                  <DynamicMedia
-                    key={media.key}
-                    fileKey={media.key}
-                    fileType={media.type}
-                    alt={media.key}
-                  />
-                ))}
-              </Box>
-            )}
+              <Typography variant="h6" sx={{ mb: 1, fontWeight: 600 }}>
+                {displayedTitle}
+              </Typography>
+              <Typography variant="body1" sx={{ mb: 2, whiteSpace: 'pre-wrap' }}>
+                {displayedContent}
+              </Typography>
 
-            <Stack direction="row" spacing={4} alignItems="center">
-              <Button
-                startIcon={<ChatBubbleOutline />}
-                size="small"
-                color="secondary"
-                onClick={handleToggleComments}
-              >
-                {fShortenNumber(post.comment_count)}
-              </Button>
-              <Button
-                startIcon={reaction.userChoice === 'like' ? <Favorite /> : <FavoriteBorder />}
-                size="small"
-                color={reaction.userChoice === 'like' ? 'error' : 'secondary'}
-                onClick={() => handlePostReaction('like')}
-              >
-                {fShortenNumber(reaction.likes)}
-              </Button>
-              <Button
-                startIcon={
-                  reaction.userChoice === 'dislike' ? <ThumbDown /> : <ThumbDownOutlined />
-                }
-                size="small"
-                color={reaction.userChoice === 'dislike' ? 'primary' : 'secondary'}
-                onClick={() => handlePostReaction('dislike')}
-              >
-                {fShortenNumber(reaction.dislikes)}
-              </Button>
-              <IconButton size="small" color="secondary">
-                <Share />
-              </IconButton>
-            </Stack>
+              {text.isTranslating ? (
+                <Button size="small" disabled startIcon={<CircularProgress size={16} />}>
+                  Translating...
+                </Button>
+              ) : text.isTranslated ? (
+                <Button size="small" onClick={handleShowOriginal} startIcon={<Translate />}>
+                  Show Original
+                </Button>
+              ) : (
+                <Button size="small" onClick={handleTranslate} startIcon={<Translate />}>
+                  Translate
+                </Button>
+              )}
 
-            {showComments && (
-              <Box sx={{ mt: 2 }}>
-                <Divider />
-                {isLoadingComments ? (
-                  <CircularProgress size={24} sx={{ my: 2 }} />
-                ) : (
-                  comments.map((comment) => (
-                    <CommentItem
-                      key={comment.id}
-                      comment={comment}
-                      onDelete={handleDeleteComment}
-                    />
-                  ))
-                )}
-                <Stack direction="row" spacing={2} sx={{ mt: 2 }}>
-                  <DynamicMedia
-                    fileKey={user?.avatar_key}
-                    renderAs="avatar"
-                    sx={{ width: 32, height: 32 }}
-                  />
-                  <InputBase
-                    fullWidth
-                    value={newComment}
-                    onChange={(e) => setNewComment(e.target.value)}
-                    placeholder="Напишите комментарий..."
-                    onKeyPress={(e) => e.key === 'Enter' && handlePostComment()}
-                    sx={{
-                      pl: 1.5,
-                      height: 40,
-                      borderRadius: 1,
-                      border: (theme) => `solid 1px ${theme.palette.divider}`,
-                    }}
-                  />
-                  <Button variant="contained" onClick={handlePostComment}>
-                    Отправить
-                  </Button>
+              {displayedHashtags && (
+                <Stack direction="row" flexWrap="wrap" spacing={1} sx={{ my: 2 }}>
+                  {displayedHashtags
+                    .split(',')
+                    .map(
+                      (tag) =>
+                        tag && (
+                          <Chip
+                            key={tag}
+                            label={tag.startsWith('#') ? tag : `#${tag}`}
+                            size="small"
+                          />
+                        )
+                    )}
                 </Stack>
-              </Box>
-            )}
-          </Box>
-        </Stack>
-      </CardContent>
-    </Card>
+              )}
+
+              {post.medias && post.medias.length > 0 && (
+                <Box
+                  sx={{
+                    display: 'grid',
+                    gridTemplateColumns: 'repeat(auto-fill, minmax(480px, 1fr))',
+                    gap: 1,
+                    mb: 2,
+                  }}
+                >
+                  {post.medias.map((media) => (
+                    <DynamicMedia
+                      key={media.key}
+                      fileKey={media.key}
+                      fileType={media.type}
+                      alt={media.key}
+                      onImageClick={handleImageClick}
+                    />
+                  ))}
+                </Box>
+              )}
+
+              <Stack direction="row" spacing={4} alignItems="center">
+                <Button
+                  startIcon={<ChatBubbleOutline />}
+                  size="small"
+                  color="secondary"
+                  onClick={handleToggleComments}
+                >
+                  {fShortenNumber(post.comment_count)}
+                </Button>
+                <Button
+                  startIcon={reaction.userChoice === 'like' ? <Favorite /> : <FavoriteBorder />}
+                  size="small"
+                  color={reaction.userChoice === 'like' ? 'error' : 'secondary'}
+                  onClick={() => handlePostReaction('like')}
+                >
+                  {fShortenNumber(reaction.likes)}
+                </Button>
+                <Button
+                  startIcon={
+                    reaction.userChoice === 'dislike' ? <ThumbDown /> : <ThumbDownOutlined />
+                  }
+                  size="small"
+                  color={reaction.userChoice === 'dislike' ? 'primary' : 'secondary'}
+                  onClick={() => handlePostReaction('dislike')}
+                >
+                  {fShortenNumber(reaction.dislikes)}
+                </Button>
+                <IconButton size="small" color="secondary">
+                  <Share />
+                </IconButton>
+              </Stack>
+
+              {showComments && (
+                <Box sx={{ mt: 2 }}>
+                  <Divider />
+                  {isLoadingComments ? (
+                    <CircularProgress size={24} sx={{ my: 2 }} />
+                  ) : (
+                    comments.map((comment) => (
+                      <CommentItem
+                        key={comment.id}
+                        comment={comment}
+                        onDelete={handleDeleteComment}
+                      />
+                    ))
+                  )}
+                  <Stack direction="row" spacing={2} sx={{ mt: 2 }}>
+                    <DynamicMedia
+                      fileKey={user?.avatar_key}
+                      renderAs="avatar"
+                      sx={{ width: 32, height: 32 }}
+                    />
+                    <InputBase
+                      fullWidth
+                      value={newComment}
+                      onChange={(e) => setNewComment(e.target.value)}
+                      placeholder="Напишите комментарий..."
+                      onKeyPress={(e) => e.key === 'Enter' && handlePostComment()}
+                      sx={{
+                        pl: 1.5,
+                        height: 40,
+                        borderRadius: 1,
+                        border: (theme) => `solid 1px ${theme.palette.divider}`,
+                      }}
+                    />
+                    <Button variant="contained" onClick={handlePostComment}>
+                      Отправить
+                    </Button>
+                  </Stack>
+                </Box>
+              )}
+            </Box>
+          </Stack>
+        </CardContent>
+      </Card>
+
+      <Dialog
+        open={Boolean(dialogImage)}
+        onClose={handleCloseDialog}
+        maxWidth="lg"
+        fullWidth
+        PaperProps={{
+          sx: { backgroundColor: 'transparent', boxShadow: 'none' },
+        }}
+      >
+        <DialogContent
+          sx={{
+            p: 0,
+            position: 'relative',
+            display: 'flex',
+            justifyContent: 'center',
+            alignItems: 'center',
+          }}
+        >
+          <IconButton
+            aria-label="close"
+            onClick={handleCloseDialog}
+            sx={{
+              position: 'absolute',
+              top: 8,
+              right: 8,
+              color: 'common.white',
+              backgroundColor: 'rgba(0, 0, 0, 0.5)',
+              '&:hover': { backgroundColor: 'rgba(0, 0, 0, 0.7)' },
+            }}
+          >
+            <Iconify icon="mdi:close" />
+          </IconButton>
+          <Box
+            component="img"
+            src={dialogImage}
+            alt="Zoomed content"
+            sx={{
+              maxWidth: '100%',
+              maxHeight: '90vh',
+              objectFit: 'contain',
+              borderRadius: 2,
+            }}
+          />
+        </DialogContent>
+      </Dialog>
+    </>
   );
 };
 

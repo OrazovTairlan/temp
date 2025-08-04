@@ -6,7 +6,7 @@ import { PeoplePage } from './people-view.jsx';
 
 // ----------------------------------------------------------------------
 
-const metadata = { title: `Профиль пользователя | Панель управления - ${CONFIG.site.name}` };
+const metadata = { title: `Люди` };
 
 export default function Page() {
   return (

@@ -47,8 +47,8 @@ export function JwtSignInView() {
   const password = useBoolean();
 
   const defaultValues = {
-    username: 'user',
-    password: 'password123',
+    username: '',
+    password: '',
   };
 
   const methods = useForm({
@@ -84,7 +84,6 @@ export function JwtSignInView() {
         },
       });
 
-
       // 3. Extract user data and token from the API response
       //    (Assuming the API returns { user: {...}, token: '...' })
       const { access_token: authToken } = response.data;
@@ -107,20 +106,38 @@ export function JwtSignInView() {
   // This effect listens to the Zustand store for successful login and redirects
   useEffect(() => {
     if (token?.length > 0) {
-      router.push("/dashboard/user");
+      router.push('/dashboard/user');
     }
   }, [token, router]);
 
   const renderHead = (
-    <Stack spacing={1.5} sx={{ mb: 5 }}>
-      <Typography variant="h5">Войти в аккаунт</Typography>
-      <Stack direction="row" spacing={0.5}>
-        <Typography variant="body2" sx={{ color: 'text.secondary' }}>
-          Нет аккаунта?
+    <Stack spacing={2} sx={{ mb: 5, textAlign: 'center' }}>
+      {/* Added Logo */}
+      <Stack sx={{ px: 2, py: 5, textAlign: 'center' }}>
+        <Typography
+          variant="h6"
+          sx={{
+            color: 'text.primary',
+            fontWeight: '900', // Use a heavier font weight for "bolder"
+            textTransform: 'uppercase', // Transform the text to uppercase
+            letterSpacing: 1.5, // Add some spacing for a stylized look
+          }}
+        >
+          Interlinked
         </Typography>
-        <Link component={RouterLink} href={paths.auth.jwt.signUp} variant="subtitle2">
-          Зарегистрироваться
-        </Link>
+      </Stack>
+
+      {/* Original Content */}
+      <Stack spacing={1} sx={{ mt: 2 }}>
+        <Typography variant="h5">Войти в аккаунт</Typography>
+        <Stack direction="row" spacing={0.5} justifyContent="center">
+          <Typography variant="body2" sx={{ color: 'text.secondary' }}>
+            Нет аккаунта?
+          </Typography>
+          <Link component={RouterLink} href={paths.auth.jwt.signUp} variant="subtitle2">
+            Зарегистрироваться
+          </Link>
+        </Stack>
       </Stack>
     </Stack>
   );

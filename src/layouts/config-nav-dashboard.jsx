@@ -88,11 +88,11 @@ export const navData = [
         icon: ICONS.external,
       },
 
-      {
-        title: 'Создание администратора',
-        path: paths.dashboard.user.root + "/admin-create",
-        icon: ICONS.analytics,
-      },
+      // {
+      //   title: 'Создание администратора',
+      //   path: paths.dashboard.user.root + "/admin-create",
+      //   icon: ICONS.analytics,
+      // },
 
       {
         title: 'Заполнение личной информации',

@@ -24,14 +24,13 @@ import {
   MenuItem,
 } from '@mui/material';
 import { LoadingButton } from '@mui/lab';
+import DialogTitle from '@mui/material/DialogTitle';
 
 // Assuming these components and utilities are correctly set up
 import { DashboardContent } from './layouts/dashboard/index.js';
 import { axiosCopy, useAppStore } from 'src/store/useBoundStore';
 import { Iconify } from 'src/components/iconify';
 import { Form, Field } from 'src/components/hook-form';
-import DialogTitle from '@mui/material/DialogTitle';
-
 
 // --- Zod Schemas for Validation ---
 const GeneralInfoSchema = zod.object({
@@ -45,7 +44,6 @@ const GeneralInfoSchema = zod.object({
     country: zod.string().optional().nullable(),
     city: zod.string().optional().nullable(),
     position: zod.string().optional().nullable(),
-    sub_position: zod.string().optional().nullable(), // Added for conditional logic
     work_place: zod.string().optional().nullable(),
     about_me: zod.string().optional().nullable(),
     specialization: zod.string().optional().nullable(),
@@ -73,9 +71,13 @@ const getDirtyValues = (dirtyFields, allValues) => {
   if (!dirtyFields || !allValues) {
     return dirtyValues;
   }
-  Object.keys(dirtyFields).forEach(key => {
+  Object.keys(dirtyFields).forEach((key) => {
     if (dirtyFields[key]) {
-      if (typeof dirtyFields[key] === 'object' && !Array.isArray(dirtyFields[key]) && allValues[key]) {
+      if (
+        typeof dirtyFields[key] === 'object' &&
+        !Array.isArray(dirtyFields[key]) &&
+        allValues[key]
+      ) {
         const nestedValues = getDirtyValues(dirtyFields[key], allValues[key]);
         if (Object.keys(nestedValues).length > 0) {
           dirtyValues[key] = nestedValues;
@@ -87,7 +89,6 @@ const getDirtyValues = (dirtyFields, allValues) => {
   });
   return dirtyValues;
 };
-
 
 // --- General Settings Form ---
 const GeneralSettingsForm = ({ userData, onUpdate }) => {
@@ -106,40 +107,26 @@ const GeneralSettingsForm = ({ userData, onUpdate }) => {
     'Другое',
   ];
 
-  const subPositionOptions = [
-    'Общественное здравоохранение',
-    'Политика',
-    'Менеджмент',
-    'Врач на пенсии',
-  ];
-
   const methods = useForm({
     resolver: zodResolver(GeneralInfoSchema),
     defaultValues: userData,
   });
 
-  const { watch, handleSubmit, setValue, formState: { isSubmitting, dirtyFields } } = methods;
-
-  const selectedPosition = watch('bio.position');
-
-  // Effect to handle conditional logic for sub_position
-  useEffect(() => {
-    // If position is 'Другое', clear the sub_position
-    if (selectedPosition === 'Другое') {
-      if (methods.getValues('bio.sub_position') !== null) {
-        setValue('bio.sub_position', null, { shouldDirty: true });
-      }
-    }
-  }, [selectedPosition, setValue, methods]);
+  const {
+    handleSubmit,
+    formState: { isSubmitting, dirtyFields },
+  } = methods;
 
   useEffect(() => {
     const fetchAvatar = async () => {
       if (userData?.avatar_key) {
         try {
-          const response = await axiosCopy.get('/file/url', { params: { key: userData.avatar_key } });
+          const response = await axiosCopy.get('/file/url', {
+            params: { key: userData.avatar_key },
+          });
           setAvatarUrl(response.data);
         } catch (error) {
-          console.error("Failed to fetch avatar URL:", error);
+          console.error('Failed to fetch avatar URL:', error);
         }
       }
     };
@@ -187,6 +174,7 @@ const GeneralSettingsForm = ({ userData, onUpdate }) => {
         <Grid item xs={12} md={8}>
           <Card sx={{ p: 3 }}>
             <Stack spacing={2}>
+              <Typography variant="h6">Основная информация</Typography>
               <Field.Text name="login" label="Логин" />
               <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2}>
                 <Field.Text name="firstname" label="Имя" />
@@ -194,14 +182,23 @@ const GeneralSettingsForm = ({ userData, onUpdate }) => {
                 <Field.Text name="secondname" label="Отчество" />
               </Stack>
               <Field.Text name="email" label="Email" />
-              <Field.Text name="birthday" label="Дата рождения" type="date" InputLabelProps={{ shrink: true }}/>
+              <Field.Text
+                name="birthday"
+                label="Дата рождения"
+                type="date"
+                InputLabelProps={{ shrink: true }}
+              />
+
+              <Typography variant="h6" sx={{ pt: 2 }}>
+                Биография и карьера
+              </Typography>
               <Field.Text name="bio.about_me" label="О себе" multiline rows={3} />
-              <Field.Text name="bio.specialization" label="Специализация" />
-              <Field.Text name="bio.work_place" label="Место работы" />
               <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2}>
                 <Field.Text name="bio.country" label="Страна" />
                 <Field.Text name="bio.city" label="Город" />
               </Stack>
+              <Field.Text name="bio.specialization" label="Специализация" />
+              <Field.Text name="bio.work_place" label="Место работы" />
               <Field.Select name="bio.position" label="Должность">
                 {positionOptions.map((option) => (
                   <MenuItem key={option} value={option}>
@@ -210,21 +207,24 @@ const GeneralSettingsForm = ({ userData, onUpdate }) => {
                 ))}
               </Field.Select>
 
-              {selectedPosition !== 'Другое' && (
-                <Field.Select name="bio.sub_position" label="Под-должность">
-                  {subPositionOptions.map((option) => (
-                    <MenuItem key={option} value={option}>
-                      {option}
-                    </MenuItem>
-                  ))}
-                </Field.Select>
-              )}
+              <Typography variant="h6" sx={{ pt: 2 }}>
+                Интересы и взгляды
+              </Typography>
+              <Field.Text name="bio.hobby" label="Хобби" />
+              <Field.Text name="bio.movies" label="Любимые фильмы" />
+              <Field.Text name="bio.musics" label="Любимая музыка" />
+              <Field.Text name="bio.worldview" label="Мировоззрение" />
             </Stack>
           </Card>
         </Grid>
       </Grid>
       <Stack alignItems="flex-end" sx={{ mt: 3 }}>
-        <LoadingButton type="submit" variant="contained" loading={isSubmitting} disabled={!Object.keys(dirtyFields).length && !avatarFile}>
+        <LoadingButton
+          type="submit"
+          variant="contained"
+          loading={isSubmitting}
+          disabled={!Object.keys(dirtyFields).length && !avatarFile}
+        >
           Сохранить изменения
         </LoadingButton>
       </Stack>
@@ -232,14 +232,17 @@ const GeneralSettingsForm = ({ userData, onUpdate }) => {
   );
 };
 
-
 // --- Security Settings Form ---
 const SecuritySettingsForm = ({ onUpdate }) => {
   const methods = useForm({
     resolver: zodResolver(PasswordSchema),
     defaultValues: { password: '', new_password: '' },
   });
-  const { handleSubmit, formState: { isSubmitting }, reset } = methods;
+  const {
+    handleSubmit,
+    formState: { isSubmitting },
+    reset,
+  } = methods;
 
   const onSubmit = async (data) => {
     const success = await onUpdate(data);
@@ -250,12 +253,19 @@ const SecuritySettingsForm = ({ onUpdate }) => {
 
   return (
     <Card sx={{ p: 3 }}>
-      <Typography variant="h6" sx={{ mb: 2 }}>Смена пароля</Typography>
+      <Typography variant="h6" sx={{ mb: 2 }}>
+        Смена пароля
+      </Typography>
       <Form methods={methods} onSubmit={handleSubmit(onSubmit)}>
         <Stack spacing={2} sx={{ maxWidth: 400 }}>
           <Field.Text name="password" type="password" label="Текущий пароль" />
           <Field.Text name="new_password" type="password" label="Новый пароль" />
-          <LoadingButton type="submit" variant="contained" loading={isSubmitting} sx={{ alignSelf: 'flex-start' }}>
+          <LoadingButton
+            type="submit"
+            variant="contained"
+            loading={isSubmitting}
+            sx={{ alignSelf: 'flex-start' }}
+          >
             Сменить пароль
           </LoadingButton>
         </Stack>
@@ -264,14 +274,17 @@ const SecuritySettingsForm = ({ onUpdate }) => {
   );
 };
 
-
 // --- Support Form ---
 const SupportForm = ({ onUpdate }) => {
   const methods = useForm({
     resolver: zodResolver(SupportSchema),
     defaultValues: { message: '' },
   });
-  const { handleSubmit, formState: { isSubmitting }, reset } = methods;
+  const {
+    handleSubmit,
+    formState: { isSubmitting },
+    reset,
+  } = methods;
 
   const onSubmit = async (data) => {
     const success = await onUpdate(data);
@@ -282,11 +295,18 @@ const SupportForm = ({ onUpdate }) => {
 
   return (
     <Card sx={{ p: 3 }}>
-      <Typography variant="h6" sx={{ mb: 2 }}>Техническая поддержка</Typography>
+      <Typography variant="h6" sx={{ mb: 2 }}>
+        Техническая поддержка
+      </Typography>
       <Form methods={methods} onSubmit={handleSubmit(onSubmit)}>
         <Stack spacing={2}>
           <Field.Text name="message" label="Ваше сообщение" multiline rows={6} />
-          <LoadingButton type="submit" variant="contained" loading={isSubmitting} sx={{ alignSelf: 'flex-end' }}>
+          <LoadingButton
+            type="submit"
+            variant="contained"
+            loading={isSubmitting}
+            sx={{ alignSelf: 'flex-end' }}
+          >
             Отправить
           </LoadingButton>
         </Stack>
@@ -298,20 +318,18 @@ const SupportForm = ({ onUpdate }) => {
 // --- Delete Account Form ---
 const DeleteAccountForm = ({ onOpenConfirm }) => (
   <Card sx={{ p: 3 }}>
-    <Typography variant="h6" sx={{ mb: 1 }}>Удалить аккаунт</Typography>
-    <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
-      После удаления вашего аккаунта все данные будут безвозвратно утеряны. Пожалуйста, будьте уверены, что хотите продолжить.
+    <Typography variant="h6" sx={{ mb: 1 }}>
+      Удалить аккаунт
     </Typography>
-    <LoadingButton
-      variant="outlined"
-      color="error"
-      onClick={onOpenConfirm}
-    >
+    <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
+      После удаления вашего аккаунта все данные будут безвозвратно утеряны. Пожалуйста, будьте
+      уверены, что хотите продолжить.
+    </Typography>
+    <LoadingButton variant="outlined" color="error" onClick={onOpenConfirm}>
       Удалить аккаунт
     </LoadingButton>
   </Card>
 );
-
 
 // --- Main Account Settings Page ---
 export const AccountSettingsPage = () => {
@@ -322,30 +340,36 @@ export const AccountSettingsPage = () => {
   const [currentTab, setCurrentTab] = useState('general');
   const [isConfirmOpen, setIsConfirmOpen] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
-  const { fetchUser } = useAppStore();
+  const { user } = useAppStore();
 
   const fetchInitialData = useCallback(async () => {
     setIsLoading(true);
+    setError('');
     try {
       const response = await axiosCopy.get('/user/me');
       const user = response.data;
 
-      const position = user.bio?.position ?? 'Абитуриент на Мед-универ';
-      const sub_position = position !== 'Другое' ? (user.bio?.sub_position ?? 'Общественное здравоохранение') : null;
+      // Deep copy to avoid mutating the original state object
+      const sanitizedUser = JSON.parse(JSON.stringify(user));
 
-      const sanitizedBio = { ...user.bio, position, sub_position };
+      // Ensure bio object exists and set a default for position if needed
+      if (!sanitizedUser.bio) {
+        sanitizedUser.bio = {};
+      }
+      sanitizedUser.bio.position = sanitizedUser.bio.position ?? 'Абитуриент на Мед-универ';
 
-      for (const key in sanitizedBio) {
-        if (sanitizedBio[key] === null) {
-          sanitizedBio[key] = '';
-        }
-      }
-      const sanitizedUser = { ...user, bio: sanitizedBio };
-      for (const key in sanitizedUser) {
-        if (sanitizedUser[key] === null) {
-          sanitizedUser[key] = '';
-        }
-      }
+      // Recursively replace null values with empty strings for controlled form fields
+      const replaceNullWithEmpty = (obj) => {
+        Object.keys(obj).forEach((key) => {
+          if (obj[key] === null) {
+            obj[key] = '';
+          } else if (typeof obj[key] === 'object' && !Array.isArray(obj[key])) {
+            replaceNullWithEmpty(obj[key]);
+          }
+        });
+      };
+
+      replaceNullWithEmpty(sanitizedUser);
       setUserData(sanitizedUser);
     } catch (err) {
       setError('Не удалось загрузить данные профиля.');
@@ -388,8 +412,7 @@ export const AccountSettingsPage = () => {
 
       if (infoUpdated || avatarUpdated) {
         setSuccess('Данные успешно обновлены!');
-        fetchUser();
-        fetchInitialData();
+        fetchInitialData(); // This re-fetches data for the form
       } else {
         setSuccess('Нет изменений для сохранения.');
       }
@@ -444,14 +467,25 @@ export const AccountSettingsPage = () => {
     { value: 'general', label: 'Общие', icon: <Iconify icon="solar:user-id-bold" /> },
     { value: 'security', label: 'Безопасность', icon: <Iconify icon="solar:lock-password-bold" /> },
     { value: 'support', label: 'Поддержка', icon: <Iconify icon="solar:help-bold" /> },
-    { value: 'delete', label: 'Удалить аккаунт', icon: <Iconify icon="solar:trash-bin-trash-bold" /> },
+    {
+      value: 'delete',
+      label: 'Удалить аккаунт',
+      icon: <Iconify icon="solar:trash-bin-trash-bold" />,
+    },
   ];
 
   return (
     <DashboardContent>
-      <Typography variant="h4" sx={{ mb: 3 }}>Настройки аккаунта</Typography>
+      <Typography variant="h4" sx={{ mb: 3 }}>
+        Настройки аккаунта
+      </Typography>
       <Tabs value={currentTab} onChange={handleTabChange} sx={{ mb: 3 }}>
-        {TABS.map((tab) => (
+        {TABS.filter((item) => {
+          if (item.value == 'support' && user.role != 'admin') {
+            return false;
+          }
+          return true;
+        }).map((tab) => (
           <Tab
             key={tab.value}
             value={tab.value}
@@ -470,17 +504,31 @@ export const AccountSettingsPage = () => {
         ))}
       </Tabs>
 
-      {error && <Alert severity="error" sx={{ mb: 3, mt: 2 }} onClose={() => setError('')}>{error}</Alert>}
-      {success && <Alert severity="success" sx={{ mb: 3, mt: 2 }} onClose={() => setSuccess('')}>{success}</Alert>}
+      {error && (
+        <Alert severity="error" sx={{ mb: 3, mt: 2 }} onClose={() => setError('')}>
+          {error}
+        </Alert>
+      )}
+      {success && (
+        <Alert severity="success" sx={{ mb: 3, mt: 2 }} onClose={() => setSuccess('')}>
+          {success}
+        </Alert>
+      )}
 
       {isLoading ? (
-        <CircularProgress />
+        <Box sx={{ display: 'flex', justifyContent: 'center', p: 5 }}>
+          <CircularProgress />
+        </Box>
       ) : (
         <Box>
-          {currentTab === 'general' && userData && <GeneralSettingsForm userData={userData} onUpdate={handleUpdateGeneralInfo} />}
+          {currentTab === 'general' && userData && (
+            <GeneralSettingsForm userData={userData} onUpdate={handleUpdateGeneralInfo} />
+          )}
           {currentTab === 'security' && <SecuritySettingsForm onUpdate={handleUpdatePassword} />}
           {currentTab === 'support' && <SupportForm onUpdate={handleSendSupportMessage} />}
-          {currentTab === 'delete' && <DeleteAccountForm onOpenConfirm={() => setIsConfirmOpen(true)} />}
+          {currentTab === 'delete' && (
+            <DeleteAccountForm onOpenConfirm={() => setIsConfirmOpen(true)} />
+          )}
         </Box>
       )}
 
@@ -488,7 +536,8 @@ export const AccountSettingsPage = () => {
         <DialogTitle>Подтвердите удаление аккаунта</DialogTitle>
         <DialogContent>
           <DialogContentText>
-            Вы уверены, что хотите удалить свой аккаунт? Это действие необратимо, и все ваши данные будут потеряны.
+            Вы уверены, что хотите удалить свой аккаунт? Это действие необратимо, и все ваши данные
+            будут потеряны.
           </DialogContentText>
         </DialogContent>
         <DialogActions>

@@ -6,7 +6,7 @@ import InterlinkedLandingPage from './aboutUs-view.jsx';
 
 // ----------------------------------------------------------------------
 
-const metadata = { title: `Профиль пользователя | Панель управления - ${CONFIG.site.name}` };
+const metadata = { title: `Лента` };
 
 export default function Page() {
   return (

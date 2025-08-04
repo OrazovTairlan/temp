@@ -210,7 +210,7 @@ const CommentItem = ({ comment, onCommentDelete, onUserClick }) => {
   return (
     <Stack key={comment.id} spacing={0.5}>
       <Stack direction="row" spacing={2}>
-        <Link onClick={() => onUserClick(comment.author.id)} sx={{ cursor: 'pointer' }}>
+        <Link onClick={() => onUserClick(comment.author.login)} sx={{ cursor: 'pointer' }}>
           <DynamicAvatar avatarKey={comment.author.avatar_key} alt={authorName} />
         </Link>
         <Paper sx={{ p: 1.5, flexGrow: 1, bgcolor: 'background.neutral' }}>
@@ -218,7 +218,7 @@ const CommentItem = ({ comment, onCommentDelete, onUserClick }) => {
             <Link
               color="inherit"
               variant="subtitle2"
-              onClick={() => onUserClick(comment.author.id)}
+              onClick={() => onUserClick(comment.author.login)}
               sx={{ cursor: 'pointer', textDecoration: 'none' }}
             >
               {authorName}
@@ -273,6 +273,7 @@ const CommentItem = ({ comment, onCommentDelete, onUserClick }) => {
 
 export function ProfilePostItem({ post, onDelete }) {
   const router = useRouter();
+
   const commentRef = useRef(null);
 
   // --- State Management ---
@@ -289,6 +290,10 @@ export function ProfilePostItem({ post, onDelete }) {
   });
 
   const authorName = `${post.author.firstname} ${post.author.surname}`;
+
+  const { user } = useAppStore();
+
+  const isAuthor = user?.id === post.author.id;
 
   // --- Data Fetching and Side Effects ---
   const fetchComments = useCallback(
@@ -320,7 +325,7 @@ export function ProfilePostItem({ post, onDelete }) {
 
   // --- Event Handlers ---
   const handleUserClick = (userId) => {
-    router.push(`/profile/${userId}`);
+    router.push(`/dashboard/user/${userId}`);
   };
 
   const handleOpenMenu = (event) => setMenuAnchorEl(event.currentTarget);
@@ -393,7 +398,7 @@ export function ProfilePostItem({ post, onDelete }) {
     <CardHeader
       disableTypography
       avatar={
-        <Link onClick={() => handleUserClick(post.author.id)} sx={{ cursor: 'pointer' }}>
+        <Link onClick={() => handleUserClick(post.author.login)} sx={{ cursor: 'pointer' }}>
           <DynamicAvatar avatarKey={post.author.avatar_key} alt={authorName} />
         </Link>
       }
@@ -401,7 +406,7 @@ export function ProfilePostItem({ post, onDelete }) {
         <Link
           color="inherit"
           variant="subtitle1"
-          onClick={() => handleUserClick(post.author.id)}
+          onClick={() => handleUserClick(post.author.login)}
           sx={{ cursor: 'pointer' }}
         >
           {authorName}
@@ -414,21 +419,25 @@ export function ProfilePostItem({ post, onDelete }) {
       }
       action={
         <>
-          <IconButton onClick={handleOpenMenu}>
-            <Iconify icon="eva:more-vertical-fill" />
-          </IconButton>
-          <Menu
-            anchorEl={menuAnchorEl}
-            open={Boolean(menuAnchorEl)}
-            onClose={handleCloseMenu}
-            anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
-            transformOrigin={{ vertical: 'top', horizontal: 'right' }}
-          >
-            <MenuItem onClick={handleDeletePost} sx={{ color: 'error.main' }}>
-              <Iconify icon="solar:trash-bin-trash-bold" sx={{ mr: 1 }} />
-              Delete
-            </MenuItem>
-          </Menu>
+          {isAuthor ? (
+            <>
+              <IconButton onClick={handleOpenMenu}>
+                <Iconify icon="eva:more-vertical-fill" />
+              </IconButton>
+              <Menu
+                anchorEl={menuAnchorEl}
+                open={Boolean(menuAnchorEl)}
+                onClose={handleCloseMenu}
+                anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
+                transformOrigin={{ vertical: 'top', horizontal: 'right' }}
+              >
+                <MenuItem onClick={handleDeletePost} sx={{ color: 'error.main' }}>
+                  <Iconify icon="solar:trash-bin-trash-bold" sx={{ mr: 1 }} />
+                  Удалить
+                </MenuItem>
+              </Menu>
+            </>
+          ) : null}
         </>
       }
     />

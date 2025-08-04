@@ -200,9 +200,9 @@ export function SettingsDrawer({
             {!hideDirection && renderRTL}
             {!hideCompact && renderCompact}
           </Box>
-          {!(hideNavLayout && hideNavColor) && renderNav}
-          {!hidePresets && renderPresets}
-          {!hideFont && renderFont}
+          {/* {!(hideNavLayout && hideNavColor) && renderNav} */}
+          {/* {!hidePresets && renderPresets} */}
+          {/* {!hideFont && renderFont} */}
         </Stack>
       </Scrollbar>
     </Drawer>

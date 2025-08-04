@@ -1,110 +1,149 @@
-/* eslint-disable */
-import { useState, useCallback, useEffect } from 'react';
+import { useState, useCallback, useEffect, useMemo } from 'react';
 import { useParams } from 'react-router-dom';
 
+// @mui
 import Box from '@mui/material/Box';
 import Tab from '@mui/material/Tab';
 import Card from '@mui/material/Card';
 import Tabs from '@mui/material/Tabs';
 import { CircularProgress, Alert } from '@mui/material';
 
+// routes
 import { paths } from 'src/routes/paths';
+
+// hooks
 import { useTabs } from 'src/hooks/use-tabs';
-import { DashboardContent } from 'src/layouts/dashboard';
+
+// components
 import { Iconify } from 'src/components/iconify';
+import { DashboardContent } from 'src/layouts/dashboard';
 import { CustomBreadcrumbs } from 'src/components/custom-breadcrumbs';
-import { axiosCopy } from './store/useBoundStore.js';
-import { ProfileCover } from './sections/user/profile-cover.jsx';
-import { OtherProfileHome } from './other-profile-home.jsx';
-import { OtherProfileFollowers } from './other-profile-followers.jsx';
+
+// sections
+import { ProfileCover } from './sections/user/profile-cover';
+import { OtherProfileHome } from './other-profile-home';
+import { OtherProfileFollowers } from './other-profile-followers';
+
+// api
+import { axiosCopy } from './store/useBoundStore';
 
 // ----------------------------------------------------------------------
 
 const TABS = [
   { value: 'profile', label: 'Профиль', icon: <Iconify icon="solar:user-id-bold" width={24} /> },
-  { value: 'followers', label: 'Подписчики', icon: <Iconify icon="solar:heart-bold" width={24} /> }
+  { value: 'followers', label: 'Подписчики', icon: <Iconify icon="solar:heart-bold" width={24} /> },
 ];
-
-const MEDIA_BASE_URL = 'http://localhost:8000/files/';
-
-// ----------------------------------------------------------------------
 
 export function OtherUserProfileView() {
   const { id } = useParams();
-  const login = id;
-
-  const [profileUser, setProfileUser] = useState(null);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState('');
   const tabs = useTabs('profile');
 
-  const fetchUserData = useCallback(async () => {
-    if (!login) return;
-    setIsLoading(true);
-    setError('');
+  // Centralized state for better management
+  const [state, setState] = useState({
+    profile: null,
+    isLoading: true,
+    error: null,
+  });
+
+  const fetchProfile = useCallback(async () => {
+    if (!id) return;
+
+    // Keep displaying old data while refetching
+    setState((prevState) => ({ ...prevState, isLoading: true, error: null }));
+
     try {
-      const response = await axiosCopy.get(`/user/${login}`);
-      setProfileUser(response.data);
+      // Step 1: Fetch the main user profile data
+      const profileResponse = await axiosCopy.get(`/user/${id}`);
+      const profileData = profileResponse.data;
+
+      let avatarUrl = '';
+      // Step 2: If an avatar_key exists, fetch the corresponding URL
+      if (profileData.avatar_key) {
+        const urlResponse = await axiosCopy.get(`/file/url`, {
+          params: { key: profileData.avatar_key },
+        });
+        // Assuming the response for the URL is { "url": "http://..." }
+        avatarUrl = urlResponse.data;
+      }
+
+      // Step 3: Set the complete profile state with the resolved avatar URL
+      setState({
+        profile: { ...profileData, avatarUrl }, // Add avatarUrl to the profile object
+        isLoading: false,
+        error: null,
+      });
     } catch (err) {
-      console.error('Failed to fetch user data:', err);
-      setError('Не удалось загрузить данные пользователя.');
-    } finally {
-      setIsLoading(false);
+      console.error('Failed to fetch user profile:', err);
+      setState({
+        profile: null,
+        isLoading: false,
+        error: 'Не удалось загрузить данные пользователя.',
+      });
     }
-  }, [login]);
+  }, [id]);
 
   useEffect(() => {
-    fetchUserData();
-  }, [fetchUserData]);
+    fetchProfile();
+  }, [fetchProfile]);
 
-  if (isLoading) {
+  // Memoize derived data to prevent recalculation on every render
+  const userName = useMemo(() => {
+    if (!state.profile) return '';
+    return [state.profile.firstname, state.profile.secondname, state.profile.surname]
+      .filter(Boolean)
+      .join(' ');
+  }, [state.profile]);
+
+  // Render loading state
+  if (state.isLoading) {
     return (
       <DashboardContent>
-        <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '80vh' }}>
+        <Box
+          sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '80vh' }}
+        >
           <CircularProgress />
         </Box>
       </DashboardContent>
     );
   }
 
-  if (error) {
+  // Render error state
+  if (state.error) {
     return (
       <DashboardContent>
-        <Alert severity="error" sx={{ m: 3 }}>{error}</Alert>
+        <Alert severity="error" sx={{ m: 3 }}>
+          {state.error}
+        </Alert>
       </DashboardContent>
     );
   }
 
-  if (!profileUser) {
+  // Render "not found" state
+  if (!state.profile) {
     return (
       <DashboardContent>
-        <Alert severity="warning" sx={{ m: 3 }}>Пользователь не найден.</Alert>
+        <Alert severity="warning" sx={{ m: 3 }}>
+          Пользователь не найден.
+        </Alert>
       </DashboardContent>
     );
   }
-
-  const userName = [profileUser.firstname, profileUser.secondname, profileUser.surname].filter(Boolean).join(' ');
-  const avatarUrl = profileUser.avatar_key ? `${MEDIA_BASE_URL}${profileUser.avatar_key}` : '';
 
   return (
     <DashboardContent>
       <CustomBreadcrumbs
         heading="Профиль"
-        links={[
-          { name: 'Пользователи', href: paths.dashboard.user.root },
-          { name: userName },
-        ]}
+        links={[{ name: 'Пользователи', href: paths.dashboard.user.root }, { name: userName }]}
         sx={{ mb: { xs: 3, md: 5 } }}
       />
 
       <Card sx={{ mb: 3, height: 290 }}>
         <ProfileCover
-          role={profileUser.role}
+          role={state.profile.role}
+          isVerified={state.profile.is_verified}
           name={userName}
-          avatarUrl={avatarUrl}
-          coverUrl={
-            'https://files.anextour.kz/Content/uploads/elfinder/ANEXKZ/news-new/kazakhstan/Depositphotos_54567813_XL.jpg'
-          }
+          avatarUrl={state.profile.avatarUrl}
+          coverUrl="https://files.anextour.kz/Content/uploads/elfinder/ANEXKZ/news-new/kazakhstan/Depositphotos_54567813_XL.jpg"
         />
 
         <Box
@@ -127,10 +166,9 @@ export function OtherUserProfileView() {
         </Box>
       </Card>
 
-      {tabs.value === 'profile' && <OtherProfileHome />}
+      {tabs.value === 'profile' && <OtherProfileHome onVerify={fetchProfile} />}
 
       {tabs.value === 'followers' && <OtherProfileFollowers />}
-
     </DashboardContent>
   );
 }

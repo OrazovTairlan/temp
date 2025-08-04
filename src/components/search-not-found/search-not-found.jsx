@@ -7,7 +7,7 @@ export function SearchNotFound({ query, sx, ...other }) {
   if (!query) {
     return (
       <Typography variant="body2" sx={sx}>
-        Please enter keywords
+        Введите ключевые слова
       </Typography>
     );
   }
@@ -17,10 +17,10 @@ export function SearchNotFound({ query, sx, ...other }) {
       <Box sx={{ mb: 1, typography: 'h6' }}>Not found</Box>
 
       <Typography variant="body2">
-        No results found for &nbsp;
+       Результаты не найдены для &nbsp;
         <strong>{`"${query}"`}</strong>
         .
-        <br /> Try checking for typos or using complete words.
+        <br /> Возможно ошибки
       </Typography>
     </Box>
   );

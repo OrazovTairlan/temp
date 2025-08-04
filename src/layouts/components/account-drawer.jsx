@@ -121,17 +121,17 @@ export function AccountDrawer({ sx, ...other }) {
                 <Typography variant="body2">{user?.email}</Typography>
               </Stack>
             </Stack>
-            <Stack direction="row" spacing={2} alignItems="center">
-              <Iconify icon="solar:shield-user-bold" width={24} sx={{ color: 'text.secondary' }} />
-              <Stack>
-                <Typography variant="caption" color="text.secondary">
-                  Роль
-                </Typography>
-                <Typography variant="body2" sx={{ textTransform: 'capitalize' }}>
-                  {user?.role}
-                </Typography>
-              </Stack>
-            </Stack>
+            {/* <Stack direction="row" spacing={2} alignItems="center"> */}
+            {/*   <Iconify icon="solar:shield-user-bold" width={24} sx={{ color: 'text.secondary' }} /> */}
+            {/*   <Stack> */}
+            {/*     <Typography variant="caption" color="text.secondary"> */}
+            {/*       Роль */}
+            {/*     </Typography> */}
+            {/*     <Typography variant="body2" sx={{ textTransform: 'capitalize' }}> */}
+            {/*       {user?.role} */}
+            {/*     </Typography> */}
+            {/*   </Stack> */}
+            {/* </Stack> */}
           </Stack>
         </Scrollbar>
 

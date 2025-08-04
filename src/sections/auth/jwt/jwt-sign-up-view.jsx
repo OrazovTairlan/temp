@@ -133,6 +133,19 @@ export function JwtSignUpView() {
 
   const renderHead = (
     <Stack spacing={1.5} sx={{ mb: 5 }}>
+      <Stack sx={{ px: 2, py: 5, textAlign: 'center' }}>
+        <Typography
+          variant="h6"
+          sx={{
+            color: 'text.primary',
+            fontWeight: '900', // Use a heavier font weight for "bolder"
+            textTransform: 'uppercase', // Transform the text to uppercase
+            letterSpacing: 1.5, // Add some spacing for a stylized look
+          }}
+        >
+          Interlinked
+        </Typography>
+      </Stack>
       <Typography variant="h5">Создать аккаунт</Typography>
       <Stack direction="row" spacing={0.5}>
         <Typography variant="body2" sx={{ color: 'text.secondary' }}>
@@ -196,7 +209,7 @@ export function JwtSignUpView() {
       </Field.Select>
 
       {/* Conditionally render sub_position based on the selected position */}
-      {selectedPosition === 'Другое' && (
+      {selectedPosition == 'Другое' && (
         <Field.Select name="sub_position" label="Под-должность">
           {subPositionOptions.map((option) => (
             <MenuItem key={option} value={option}>
@@ -206,7 +219,7 @@ export function JwtSignUpView() {
         </Field.Select>
       )}
 
-      <Field.Text name="specialization" label="Специализация" InputLabelProps={{ shrink: true }} />
+      <Field.Text name="specialization" placeholder = "терапевт, педиатр, невролог и другие" label="Специализация" InputLabelProps={{ shrink: true }} />
 
       <LoadingButton
         fullWidth
@@ -264,7 +277,7 @@ export function JwtSignUpView() {
         {renderForm}
       </Form>
 
-      {renderTerms}
+      {/* {renderTerms} */}
     </>
   );
 }

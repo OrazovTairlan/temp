@@ -22,10 +22,11 @@ import { Iconify } from 'src/components/iconify';
 import { ProfilePostItem } from './profile-post-item';
 import { axiosCopy, useAppStore } from '../../store/useBoundStore.js';
 import { useRouter } from '../../routes/hooks/index.js';
+import { LoadingButton } from '@mui/lab';
 
 // ----------------------------------------------------------------------
 
-export function ProfileHome({ posts }) {
+export function ProfileHome({ posts, onVerify }) {
   const { user } = useAppStore();
   const fileRef = useRef(null);
 
@@ -41,6 +42,9 @@ export function ProfileHome({ posts }) {
   const [selectedFiles, setSelectedFiles] = useState([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState('');
+
+  const [isVerified, setIsVerified] = useState(false);
+  const [isVerifyLoading, setIsVerifyLoading] = useState(false);
 
   // --- Function to fetch user posts ---
   const fetchUserPosts = useCallback(async () => {
