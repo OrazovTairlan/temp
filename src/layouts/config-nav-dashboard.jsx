@@ -94,11 +94,11 @@ export const navData = [
       //   icon: ICONS.analytics,
       // },
 
-      {
-        title: 'Заполнение личной информации',
-        path: paths.dashboard.user.root + "/bio-fill",
-        icon: ICONS.blog,
-      },
+      // {
+      //   title: 'Заполнение личной информации',
+      //   path: paths.dashboard.user.root + "/bio-fill",
+      //   icon: ICONS.blog,
+      // },
 
       {
         title: 'Люди',
