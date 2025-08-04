@@ -89,7 +89,10 @@ export function ProfileCover({ name, isVerified, avatarUrl, role, coverUrl }) {
               {isVerified && <CheckCircleIcon sx={{ ml: 1, color: 'primary.main' }} />}
             </Typography>
           }
-          secondary={role == 'admin' ? 'Администратор' : ''}
+          secondary={role.role == 'admin' ? <>
+            Администратор <br/>
+            {role.login}
+          </> : ''}
           secondaryTypographyProps={{
             mt: 0.5,
             color: 'inherit',

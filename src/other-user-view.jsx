@@ -139,7 +139,10 @@ export function OtherUserProfileView() {
 
       <Card sx={{ mb: 3, height: 290 }}>
         <ProfileCover
-          role={state.profile.role}
+          role={{
+            role: state.profile.role,
+            login: state.profile.login
+          }}
           isVerified={state.profile.is_verified}
           name={userName}
           avatarUrl={state.profile.avatarUrl}

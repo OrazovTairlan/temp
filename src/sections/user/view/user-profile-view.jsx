@@ -85,7 +85,10 @@ export function UserProfileView() {
 
       <Card sx={{ mb: 3, height: 290 }}>
         <ProfileCover
-          role={user.role}
+          role={{
+            role: user.role,
+            login: user.login,
+          }}
           name={userName}
           avatarUrl={avatarUrl}
           isVerified={user.is_verified}
