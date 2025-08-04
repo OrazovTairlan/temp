@@ -10,7 +10,7 @@ import { createCommonSlice } from './commonSlice.js';
 
 // --- AXIOS INSTANCE ---
 export const axiosCopy = axios.create({
-  baseURL: '/api',
+  baseURL: 'https://newinterlinked.com/api',
 });
 
 // --- ZUSTAND STORE ---
