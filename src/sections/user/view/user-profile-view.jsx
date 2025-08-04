@@ -16,6 +16,7 @@ import { useAppStore, axiosCopy } from '../../../store/useBoundStore.js';
 import { ProfileHome } from '../profile-home';
 import { ProfileCover } from '../profile-cover';
 import { ProfileFollowers } from '../profile-followers';
+import { ProfileFollowings } from '../../../profile-followings.jsx';
 // import { ProfileFriends } from '../profile-friends'; // Assuming this will be implemented later
 
 // ----------------------------------------------------------------------
@@ -23,6 +24,7 @@ import { ProfileFollowers } from '../profile-followers';
 const TABS = [
   { value: 'profile', label: 'Профиль', icon: <Iconify icon="solar:user-id-bold" width={24} /> },
   { value: 'followers', label: 'Подписчики', icon: <Iconify icon="solar:heart-bold" width={24} /> },
+  { value: 'followings', label: 'Подписки', icon: <Iconify icon="solar:heart-bold" width={24} /> },
 ];
 
 // ----------------------------------------------------------------------
@@ -113,6 +115,8 @@ export function UserProfileView() {
       </Card>
 
       {tabs.value === 'profile' && <ProfileHome />}
+
+      {tabs.value === 'followings' && <ProfileFollowings />}
 
       {tabs.value === 'followers' && <ProfileFollowers />}
 

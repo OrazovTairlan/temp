@@ -24,9 +24,7 @@ import { ProfilePostItem } from './sections/user/profile-post-item.jsx';
 export function OtherProfileHome({ onVerify }) {
   const { id } = useParams(); // Changed to 'id' to match your latest code
 
-
-
-  const {user} = useAppStore()
+  const { user } = useAppStore();
   const login = id;
 
   const [profileUser, setProfileUser] = useState(null);
@@ -35,6 +33,8 @@ export function OtherProfileHome({ onVerify }) {
   const [error, setError] = useState('');
   const [isFollowing, setIsFollowing] = useState(false);
   const [isFollowLoading, setIsFollowLoading] = useState(false);
+
+  const [isTest, setTest] = useState(false);
 
   const [isVerified, setIsVerified] = useState(false);
   const [isVerifyLoading, setIsVerifyLoading] = useState(false);
@@ -49,7 +49,10 @@ export function OtherProfileHome({ onVerify }) {
         axiosCopy.get(`/user/${login}/posts`),
       ]);
 
+      const [testFollow] = await Promise.all([axiosCopy.get(`/user/me/follow/${login}`)]);
+
       setProfileUser(userResponse.data);
+      setTest(testFollow.data);
       setIsFollowing(userResponse.data.is_following);
       setUserPosts(postsResponse.data);
     } catch (err) {
@@ -68,12 +71,14 @@ export function OtherProfileHome({ onVerify }) {
     if (!profileUser) return;
     setIsFollowLoading(true);
     try {
-      if (isFollowing) {
+      if (isTest) {
         // API call to unfollow
         await axiosCopy.post(`/user/me/unfollow/${login}`);
+        setTest(false)
       } else {
         // API call to follow
         await axiosCopy.post(`/user/me/follow/${login}`);
+        setTest(true)
       }
 
       // Update state on success
@@ -160,11 +165,11 @@ export function OtherProfileHome({ onVerify }) {
       <Box sx={{ mt: 3, px: 2 }}>
         <LoadingButton
           fullWidth
-          variant={isFollowing ? 'outlined' : 'contained'}
+          variant={isTest ? 'outlined' : 'contained'}
           onClick={handleFollowToggle}
           loading={isFollowLoading}
         >
-          {isFollowing ? 'Отписаться' : 'Подписаться'}
+          {isTest ? 'Отписаться' : 'Подписаться'}
         </LoadingButton>
       </Box>
 
