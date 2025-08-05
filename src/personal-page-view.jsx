@@ -486,7 +486,7 @@ export const AccountSettingsPage = () => {
       </Typography>
       <Tabs value={currentTab} onChange={handleTabChange} sx={{ mb: 3 }}>
         {TABS.filter((item) => {
-          if (item.value == 'support' && user.is_verified) {
+          if (item.value == 'support' && user.is_verified == false) {
             return false;
           }
           return true;
