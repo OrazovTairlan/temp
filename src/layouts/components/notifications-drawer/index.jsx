@@ -38,7 +38,7 @@ const TABS = [
   { value: 'unread', label: 'Непрочитанные' },
 ];
 
-const WEBSOCKET_URL = 'ws://localhost:8000/ws'; // Replace with your actual WebSocket URL
+const WEBSOCKET_URL = 'wss://newinterlinked.com/api/ws'; // Replace with your actual WebSocket URL
 
 // --- Custom Hook for Notifications Logic ---
 const useNotifications = () => {
