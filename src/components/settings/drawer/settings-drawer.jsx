@@ -64,23 +64,23 @@ export function SettingsDrawer({
         Настройки
       </Typography>
 
-      <FullScreenButton />
+      {/* <FullScreenButton /> */}
 
-      <Tooltip title="Сбросить">
-        <IconButton
-          onClick={() => {
-            settings.onReset();
-            setMode(defaultSettings.colorScheme);
-          }}
-        >
-          <Badge color="error" variant="dot" invisible={!settings.canReset}>
-            <Iconify icon="solar:restart-bold" />
-          </Badge>
-        </IconButton>
-      </Tooltip>
+      {/* <Tooltip title="Сбросить"> */}
+      {/*   <IconButton */}
+      {/*     onClick={() => { */}
+      {/*       settings.onReset(); */}
+      {/*       setMode(defaultSettings.colorScheme); */}
+      {/*     }} */}
+      {/*   > */}
+      {/*     <Badge color="error" variant="dot" invisible={!settings.canReset}> */}
+      {/*       <Iconify icon="solar:restart-bold" /> */}
+      {/*     </Badge> */}
+      {/*   </IconButton> */}
+      {/* </Tooltip> */}
 
       <Tooltip title="Закрыть">
-        <IconButton onClick={settings.onCloseDrawer}>
+        <IconButton onClick={toggleSettingsMenu}>
           <Iconify icon="mingcute:close-line" />
         </IconButton>
       </Tooltip>

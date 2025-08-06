@@ -7,8 +7,10 @@ import {
   Paper,
   Button,
   useTheme,
+  Link
 } from '@mui/material';
 import { useRouter } from 'src/routes/hooks';
+import { Link as RouterLink } from 'react-router-dom';
 import { paths } from 'src/routes/paths';
 
 
@@ -96,6 +98,18 @@ const InterlinkedLandingPage = () => {
               <Typography variant="body1" sx={{ fontSize: '1.1rem', lineHeight: 1.8 }}>
                 Здесь собираются люди, у которых, как правило, нет времени. Но есть причина
                 остаться хотя бы на пару минут. И этого, в общем, достаточно.
+              </Typography> <br/>
+              <Typography variant="body1" sx={{ fontSize: '1.1rem', lineHeight: 1.8 }}>
+                Основатель{' '}
+                <Link
+                  component={RouterLink}
+                  to="/dashboard/user/berkeshov"
+                  color="inherit" // Inherits the color from the parent Typography
+                  underline="hover" // A nice UX touch: only underline on hover
+                  sx={{ fontWeight: 'bold' }} // Optional: makes the name stand out
+                >
+                  Бауыржан Еркешов
+                </Link>
               </Typography>
             </Stack>
           </Stack>
