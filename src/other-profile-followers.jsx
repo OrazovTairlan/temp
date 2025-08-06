@@ -14,6 +14,9 @@ import { Iconify } from 'src/components/iconify';
 import { axiosCopy } from 'src/store/useBoundStore';
 import { useParams } from './routes/hooks/index.js';
 
+import { translation } from 'src/translation.js';
+import { useTranslation } from 'react-i18next';
+
 // ----------------------------------------------------------------------
 
 // --- Reusable Component for fetching and displaying Avatars ---
@@ -49,6 +52,8 @@ const DynamicAvatar = ({ avatarKey, alt, sx }) => {
 
 function FollowerItem({ follower, onFollowToggle, isUpdating }) {
   const { firstname, surname, bio, avatar_key, is_following, login } = follower;
+
+  const { i18n } = useTranslation();
   const name = `${firstname} ${surname}`;
 
   return (
@@ -60,7 +65,7 @@ function FollowerItem({ follower, onFollowToggle, isUpdating }) {
         secondary={
           <>
             <Iconify icon="mingcute:location-fill" width={16} sx={{ flexShrink: 0, mr: 0.5 }} />
-            {bio?.country || 'Location not set'}
+            {bio?.country || translation[i18n.language].locationNot}
           </>
         }
         primaryTypographyProps={{ noWrap: true, typography: 'subtitle2' }}
@@ -86,13 +91,16 @@ function FollowerItem({ follower, onFollowToggle, isUpdating }) {
         loading={isUpdating}
         sx={{ flexShrink: 0, ml: 1.5 }}
       >
-        {is_following ? 'Вы подписаны' : 'Подписаться'}
+        {is_following
+          ? translation[i18n.language].statusFollowed
+          : translation[i18n.language].follow}
       </LoadingButton>
     </Card>
   );
 }
 
 export function OtherProfileFollowers() {
+  const { i18n } = useTranslation();
   const [followers, setFollowers] = useState([]);
   const { id } = useParams();
   const [isLoading, setIsLoading] = useState(true);
@@ -107,7 +115,7 @@ export function OtherProfileFollowers() {
       setFollowers(response.data);
     } catch (err) {
       console.error('Failed to fetch followers:', err);
-      setError('Не удалось загрузить подписчиков.');
+      setError(translation[i18n.language].error);
     } finally {
       setIsLoading(false);
     }
@@ -149,7 +157,7 @@ export function OtherProfileFollowers() {
   return (
     <>
       <Typography variant="h4" sx={{ my: 5 }}>
-        Подписчики
+        {translation[i18n.language].followers}
       </Typography>
 
       {isLoading ? (

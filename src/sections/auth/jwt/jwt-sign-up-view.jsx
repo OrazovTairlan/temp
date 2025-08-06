@@ -1,8 +1,9 @@
 /* eslint-disable */
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { z as zod } from 'zod';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
+import { useTranslation } from 'react-i18next';
 
 import Alert from '@mui/material/Alert';
 import Stack from '@mui/material/Stack';
@@ -11,51 +12,51 @@ import LoadingButton from '@mui/lab/LoadingButton';
 import Link from '@mui/material/Link';
 import IconButton from '@mui/material/IconButton';
 import InputAdornment from '@mui/material/InputAdornment';
+import MenuItem from '@mui/material/MenuItem';
 
 import { paths } from 'src/routes/paths';
 import { useRouter } from 'src/routes/hooks';
 import { RouterLink } from 'src/routes/components';
-
 import { useBoolean } from 'src/hooks/use-boolean';
-
 import { Iconify } from 'src/components/iconify';
 import { Form, Field } from 'src/components/hook-form';
 import { axiosCopy } from '../../../store/useBoundStore.js';
-import MenuItem from '@mui/material/MenuItem';
 
-// ----------------------------------------------------------------------
-
-// Zod schema updated for conditional logic
-export const RegistrationSchema = zod.object({
-  login: zod.string().min(1, { message: 'Логин обязателен!' }),
-  password: zod
-    .string()
-    .min(1, { message: 'Пароль обязателен!' })
-    .min(6, { message: 'Пароль должен содержать не менее 6 символов!' }),
-  email: zod
-    .string()
-    .min(1, { message: 'Email обязателен!' })
-    .email({ message: 'Неверный формат email адреса!' }),
-  firstname: zod.string().min(1, { message: 'Имя обязательно!' }),
-  surname: zod.string().min(1, { message: 'Фамилия обязательна!' }),
-  secondname: zod.string().optional(),
-  birthday: zod.string().min(1, { message: 'Дата рождения обязательна!' }),
-  country: zod.string().min(1, { message: 'Страна обязательна!' }),
-  city: zod.string().min(1, { message: 'Город обязателен!' }),
-  position: zod.string().min(1, { message: 'Должность обязательна!' }),
-  // sub_position is now optional as it's conditional
-  sub_position: zod.string().optional(),
-  specialization: zod.string().min(1, { message: 'Специализация обязательна!' }),
-});
+// ❗️ Adjust the path to your translation file
+import { translation } from 'src/translation.js';
 
 // ----------------------------------------------------------------------
 
 export function JwtSignUpView() {
   const router = useRouter();
+  const { i18n } = useTranslation();
   const password = useBoolean();
   const [errorMsg, setErrorMsg] = useState('');
   const [successMsg, setSuccessMsg] = useState('');
 
+  // --- Dynamic Schema Definition ---
+  // Validation messages are translated, but the schema structure is static.
+  const RegistrationSchema = useMemo(() => zod.object({
+    login: zod.string().min(1, { message: translation[i18n.language].validationSignUp.loginRequired }),
+    password: zod.string()
+      .min(1, { message: translation[i18n.language].validationSignUp.passwordRequired })
+      .min(6, { message: translation[i18n.language].validationSignUp.passwordMinLength }),
+    email: zod.string()
+      .min(1, { message: translation[i18n.language].validationSignUp.emailRequired })
+      .email({ message: translation[i18n.language].validationSignUp.emailInvalid }),
+    firstname: zod.string().min(1, { message: translation[i18n.language].validationSignUp.firstnameRequired }),
+    surname: zod.string().min(1, { message: translation[i18n.language].validationSignUp.surnameRequired }),
+    secondname: zod.string().optional(),
+    birthday: zod.string().min(1, { message: translation[i18n.language].validationSignUp.birthdayRequired }),
+    country: zod.string().min(1, { message: translation[i18n.language].validationSignUp.countryRequired }),
+    city: zod.string().min(1, { message: translation[i18n.language].validationSignUp.cityRequired }),
+    position: zod.string().min(1, { message: translation[i18n.language].validationSignUp.positionRequired }),
+    sub_position: zod.string().optional(),
+    specialization: zod.string().min(1, { message: translation[i18n.language].validationSignUp.specializationRequired }),
+  }), [i18n.language]);
+
+
+  // --- Static Russian Options as requested ---
   const positionOptions = [
     'Абитуриент на Мед-универ',
     'Студент медицинской школы/бакалавриат',
@@ -84,8 +85,8 @@ export function JwtSignUpView() {
     birthday: '',
     country: '',
     city: '',
-    position: 'Абитуриент на Мед-универ',
-    sub_position: 'Общественное здравоохранение',
+    position: positionOptions[0],
+    sub_position: subPositionOptions[0],
     specialization: '',
   };
 
@@ -100,7 +101,6 @@ export function JwtSignUpView() {
     formState: { isSubmitting },
   } = methods;
 
-  // Watch the value of the 'position' field to conditionally show 'sub_position'
   const selectedPosition = watch('position');
 
   const onSubmit = handleSubmit(async (data) => {
@@ -108,25 +108,18 @@ export function JwtSignUpView() {
     setSuccessMsg('');
     try {
       const payload = { ...data };
-
-      // If position is not 'Другое', remove sub_position from the payload
+      // Logic now compares against the static Russian string 'Другое'
       if (payload.position !== 'Другое') {
         delete payload.sub_position;
       }
-
-      console.log('Sending data to API:', payload);
-
       await axiosCopy.post('/register', payload);
-
-      setSuccessMsg('Регистрация прошла успешно! Вы будете перенаправлены.');
-
+      setSuccessMsg(translation[i18n.language].registrationSuccess);
       setTimeout(() => {
         router.push(paths.auth.jwt.signIn);
       }, 2000);
     } catch (error) {
       console.error('Registration failed:', error);
-      const message =
-        error.response?.data?.detail || error.message || 'Произошла ошибка при регистрации.';
+      const message = error.response?.data?.detail || error.message || translation[i18n.language].registrationError;
       setErrorMsg(message);
     }
   });
@@ -134,25 +127,17 @@ export function JwtSignUpView() {
   const renderHead = (
     <Stack spacing={1.5} sx={{ mb: 5 }}>
       <Stack sx={{ px: 2, py: 5, textAlign: 'center' }}>
-        <Typography
-          variant="h6"
-          sx={{
-            color: 'text.primary',
-            fontWeight: '900', // Use a heavier font weight for "bolder"
-            textTransform: 'uppercase', // Transform the text to uppercase
-            letterSpacing: 1.5, // Add some spacing for a stylized look
-          }}
-        >
+        <Typography variant="h6" sx={{ color: 'text.primary', fontWeight: '900', textTransform: 'uppercase', letterSpacing: 1.5 }}>
           Interlinked
         </Typography>
       </Stack>
-      <Typography variant="h5">Создать аккаунт</Typography>
+      <Typography variant="h5">{translation[i18n.language].createAccount}</Typography>
       <Stack direction="row" spacing={0.5}>
         <Typography variant="body2" sx={{ color: 'text.secondary' }}>
-          Уже есть аккаунт?
+          {translation[i18n.language].alreadyHaveAccount}
         </Typography>
         <Link component={RouterLink} href={paths.auth.jwt.signIn} variant="subtitle2">
-          Войти
+          {translation[i18n.language].signIn}
         </Link>
       </Stack>
     </Stack>
@@ -160,20 +145,17 @@ export function JwtSignUpView() {
 
   const renderForm = (
     <Stack spacing={3}>
-      <Field.Text name="login" label="Логин" InputLabelProps={{ shrink: true }} />
-
+      <Field.Text name="login" label={translation[i18n.language].login} InputLabelProps={{ shrink: true }} />
       <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2}>
-        <Field.Text name="firstname" label="Имя" InputLabelProps={{ shrink: true }} />
-        <Field.Text name="surname" label="Фамилия" InputLabelProps={{ shrink: true }} />
-        <Field.Text name="secondname" label="Отчество" InputLabelProps={{ shrink: true }} />
+        <Field.Text name="firstname" label={translation[i18n.language].firstname} InputLabelProps={{ shrink: true }} />
+        <Field.Text name="surname" label={translation[i18n.language].surname} InputLabelProps={{ shrink: true }} />
+        <Field.Text name="secondname" label={translation[i18n.language].secondname} InputLabelProps={{ shrink: true }} />
       </Stack>
-
-      <Field.Text name="email" label="Email адрес" InputLabelProps={{ shrink: true }} />
-
+      <Field.Text name="email" label={translation[i18n.language].email} InputLabelProps={{ shrink: true }} />
       <Field.Text
         name="password"
-        label="Пароль"
-        placeholder="6+ символов"
+        label={translation[i18n.language].password}
+        placeholder={translation[i18n.language].passwordPlaceholder}
         type={password.value ? 'text' : 'password'}
         InputLabelProps={{ shrink: true }}
         InputProps={{
@@ -186,41 +168,34 @@ export function JwtSignUpView() {
           ),
         }}
       />
-
-      <Field.Text
-        name="birthday"
-        label="Дата рождения"
-        type="date"
-        InputLabelProps={{ shrink: true }}
-      />
-
+      <Field.Text name="birthday" label={translation[i18n.language].birthDate} type="date" InputLabelProps={{ shrink: true }} />
       <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2}>
-        <Field.Text name="country" label="Страна" InputLabelProps={{ shrink: true }} />
-        <Field.Text name="city" label="Город" InputLabelProps={{ shrink: true }} />
+        <Field.Text name="country" label={translation[i18n.language].country} InputLabelProps={{ shrink: true }} />
+        <Field.Text name="city" label={translation[i18n.language].city} InputLabelProps={{ shrink: true }} />
       </Stack>
 
-      {/* Position is now a Select dropdown */}
-      <Field.Select name="position" label="Должность">
+      {/* Position Dropdown (uses static Russian options) */}
+      <Field.Select name="position" label={translation[i18n.language].position}>
         {positionOptions.map((option) => (
-          <MenuItem key={option} value={option}>
-            {option}
-          </MenuItem>
+          <MenuItem key={option} value={option}>{option}</MenuItem>
         ))}
       </Field.Select>
 
-      {/* Conditionally render sub_position based on the selected position */}
-      {selectedPosition == 'Другое' && (
-        <Field.Select name="sub_position" label="Под-должность">
+      {/* Conditional Sub-Position Dropdown (uses static Russian options) */}
+      {selectedPosition === 'Другое' && (
+        <Field.Select name="sub_position" label={translation[i18n.language].subPosition}>
           {subPositionOptions.map((option) => (
-            <MenuItem key={option} value={option}>
-              {option}
-            </MenuItem>
+            <MenuItem key={option} value={option}>{option}</MenuItem>
           ))}
         </Field.Select>
       )}
 
-      <Field.Text name="specialization" placeholder = "терапевт, педиатр, невролог и другие" label="Специализация" InputLabelProps={{ shrink: true }} />
-
+      <Field.Text
+        name="specialization"
+        placeholder={translation[i18n.language].specializationPlaceholder}
+        label={translation[i18n.language].specialization}
+        InputLabelProps={{ shrink: true }}
+      />
       <LoadingButton
         fullWidth
         color="inherit"
@@ -228,56 +203,21 @@ export function JwtSignUpView() {
         type="submit"
         variant="contained"
         loading={isSubmitting}
-        loadingIndicator="Создание аккаунта..."
+        loadingIndicator={translation[i18n.language].inCreatingAccount}
       >
-        Создать аккаунт
+        {translation[i18n.language].createAccount}
       </LoadingButton>
     </Stack>
-  );
-
-  const renderTerms = (
-    <Typography
-      component="div"
-      sx={{
-        mt: 3,
-        textAlign: 'center',
-        typography: 'caption',
-        color: 'text.secondary',
-      }}
-    >
-      {'Регистрируясь, я соглашаюсь с '}
-      <Link underline="always" color="text.primary">
-        Условиями обслуживания
-      </Link>
-      {' и '}
-      <Link underline="always" color="text.primary">
-        Политикой конфиденциальности
-      </Link>
-      .
-    </Typography>
   );
 
   return (
     <>
       {renderHead}
-
-      {!!errorMsg && (
-        <Alert severity="error" sx={{ mb: 3 }}>
-          {errorMsg}
-        </Alert>
-      )}
-
-      {!!successMsg && (
-        <Alert severity="success" sx={{ mb: 3 }}>
-          {successMsg}
-        </Alert>
-      )}
-
+      {!!errorMsg && <Alert severity="error" sx={{ mb: 3 }}>{errorMsg}</Alert>}
+      {!!successMsg && <Alert severity="success" sx={{ mb: 3 }}>{successMsg}</Alert>}
       <Form methods={methods} onSubmit={onSubmit}>
         {renderForm}
       </Form>
-
-      {/* {renderTerms} */}
     </>
   );
 }

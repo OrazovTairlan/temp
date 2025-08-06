@@ -26,15 +26,25 @@ import { OtherProfileFollowers } from './other-profile-followers';
 
 // api
 import { axiosCopy } from './store/useBoundStore';
+import { useTranslation } from 'react-i18next';
+import { translation } from './translation.js';
 
 // ----------------------------------------------------------------------
 
-const TABS = [
-  { value: 'profile', label: 'Профиль', icon: <Iconify icon="solar:user-id-bold" width={24} /> },
-  { value: 'followers', label: 'Подписчики', icon: <Iconify icon="solar:heart-bold" width={24} /> },
-];
-
 export function OtherUserProfileView() {
+  const { i18n } = useTranslation();
+  const TABS = [
+    {
+      value: 'profile',
+      label: translation[i18n.language].profile,
+      icon: <Iconify icon="solar:user-id-bold" width={24} />,
+    },
+    {
+      value: 'followers',
+      label: translation[i18n.language].followers,
+      icon: <Iconify icon="solar:heart-bold" width={24} />,
+    },
+  ];
   const { id } = useParams();
   const tabs = useTabs('profile');
 
@@ -77,7 +87,7 @@ export function OtherUserProfileView() {
       setState({
         profile: null,
         isLoading: false,
-        error: 'Не удалось загрузить данные пользователя.',
+        error: translation[i18n.language].error,
       });
     }
   }, [id]);
@@ -123,7 +133,7 @@ export function OtherUserProfileView() {
     return (
       <DashboardContent>
         <Alert severity="warning" sx={{ m: 3 }}>
-          Пользователь не найден.
+          {translation[i18n.language].userNotFound}
         </Alert>
       </DashboardContent>
     );
@@ -132,8 +142,11 @@ export function OtherUserProfileView() {
   return (
     <DashboardContent>
       <CustomBreadcrumbs
-        heading="Профиль"
-        links={[{ name: 'Пользователи', href: paths.dashboard.user.root }, { name: userName }]}
+        heading={translation[i18n.language].profile}
+        links={[
+          { name: translation[i18n.language].users, href: paths.dashboard.user.root },
+          { name: userName },
+        ]}
         sx={{ mb: { xs: 3, md: 5 } }}
       />
 
@@ -141,7 +154,7 @@ export function OtherUserProfileView() {
         <ProfileCover
           role={{
             role: state.profile.role,
-            login: state.profile.login
+            login: state.profile.login,
           }}
           isVerified={state.profile.is_verified}
           name={userName}

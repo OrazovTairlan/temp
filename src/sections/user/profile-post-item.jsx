@@ -26,6 +26,269 @@ import { varAlpha } from 'src/theme/styles';
 import { Image } from 'src/components/image';
 import { Iconify } from 'src/components/iconify';
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+import {useTranslation} from "react-i18next";
+import {translation} from "src/translation.js";
 // Assuming axios is configured elsewhere and imported
 import { axiosCopy, useAppStore } from 'src/store/useBoundStore';
 
@@ -65,13 +328,14 @@ const DynamicAvatar = ({ avatarKey, alt, sx }) => {
 // --- MediaItem Component to fetch and display individual media files ---
 const MediaItem = ({ media }) => {
   const [mediaUrl, setMediaUrl] = useState('');
+  const { i18n } = useTranslation();
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
 
   useEffect(() => {
     const fetchMediaUrl = async () => {
       if (!media.key) {
-        setError('No media key provided.');
+        setError(translation[i18n.language].error);
         setIsLoading(false);
         return;
       }
@@ -82,7 +346,7 @@ const MediaItem = ({ media }) => {
         setMediaUrl(response.data);
       } catch (err) {
         console.error('Failed to fetch media URL:', err);
-        setError('Could not load media.');
+        setError(translation[i18n.language].error);
       } finally {
         setIsLoading(false);
       }
@@ -156,6 +420,144 @@ const MediaItem = ({ media }) => {
 // --- CommentItem Component with Delete Functionality ---
 const CommentItem = ({ comment, onCommentDelete, onUserClick }) => {
   const { user } = useAppStore();
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  const {i18n} = useTranslation();
   const [menuAnchorEl, setMenuAnchorEl] = useState(null);
   const [commentReactions, setCommentReactions] = useState({
     likes: comment.like_count || 0,
@@ -239,7 +641,7 @@ const CommentItem = ({ comment, onCommentDelete, onUserClick }) => {
                   >
                     <MenuItem onClick={handleDeleteComment} sx={{ color: 'error.main' }}>
                       <Iconify icon="solar:trash-bin-trash-bold" sx={{ mr: 1 }} />
-                      Удалить
+                      {translation[i18n.language].deleteComment}
                     </MenuItem>
                   </Menu>
                 </>
@@ -273,6 +675,7 @@ const CommentItem = ({ comment, onCommentDelete, onUserClick }) => {
 
 export function ProfilePostItem({ post, onDelete }) {
   const router = useRouter();
+  const { i18n } = useTranslation();
 
   const commentRef = useRef(null);
 
@@ -433,7 +836,7 @@ export function ProfilePostItem({ post, onDelete }) {
               >
                 <MenuItem onClick={handleDeletePost} sx={{ color: 'error.main' }}>
                   <Iconify icon="solar:trash-bin-trash-bold" sx={{ mr: 1 }} />
-                  Удалить
+                  {translation[i18n.language].deletePost}
                 </MenuItem>
               </Menu>
             </>
@@ -540,7 +943,7 @@ export function ProfilePostItem({ post, onDelete }) {
         fullWidth
         value={newComment}
         inputRef={commentRef}
-        placeholder="Напишите комментарий..."
+        placeholder={translation[i18n.language].writeComment}
         onChange={(e) => setNewComment(e.target.value)}
         endAdornment={
           <InputAdornment position="end" sx={{ mr: 1 }}>

@@ -26,6 +26,8 @@ import { useAppStore } from '../../../store/useBoundStore.js';
 
 // ----------------------------------------------------------------------
 
+import {translation} from "src/translation.js"
+import {useTranslation} from "react-i18next"
 export function SettingsDrawer({
                                  sx,
                                  hideFont,
@@ -53,6 +55,254 @@ export function SettingsDrawer({
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  const {i18n} = useTranslation();
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
   const settings = useSettingsContext()
   const {isOpenSettingsMenu, toggleSettingsMenu} = useAppStore()
 
@@ -61,7 +311,7 @@ export function SettingsDrawer({
   const renderHead = (
     <Box display="flex" alignItems="center" sx={{ py: 2, pr: 1, pl: 2.5 }}>
       <Typography variant="h6" sx={{ flexGrow: 1 }}>
-        Настройки
+        {translation[i18n.language].settings}
       </Typography>
 
       {/* <FullScreenButton /> */}
@@ -79,7 +329,7 @@ export function SettingsDrawer({
       {/*   </IconButton> */}
       {/* </Tooltip> */}
 
-      <Tooltip title="Закрыть">
+      <Tooltip title={translation[i18n.language].close}>
         <IconButton onClick={toggleSettingsMenu}>
           <Iconify icon="mingcute:close-line" />
         </IconButton>
@@ -89,7 +339,7 @@ export function SettingsDrawer({
 
   const renderMode = (
     <BaseOption
-      label="Тёмный режим"
+      label={translation[i18n.language].dark}
       icon="moon"
       selected={settings.colorScheme === 'dark'}
       onClick={() => {
@@ -101,7 +351,7 @@ export function SettingsDrawer({
 
   const renderContrast = (
     <BaseOption
-      label="Контрастность"
+      label={translation[i18n.language].contrast}
       icon="contrast"
       selected={settings.contrast === 'hight'}
       onClick={() =>
@@ -112,7 +362,7 @@ export function SettingsDrawer({
 
   const renderRTL = (
     <BaseOption
-      label="Справа налево"
+      label={translation[i18n.language].rightLeft}
       icon="align-right"
       selected={settings.direction === 'rtl'}
       onClick={() =>
@@ -123,8 +373,8 @@ export function SettingsDrawer({
 
   const renderCompact = (
     <BaseOption
-      tooltip="Только для панели управления; доступно при разрешении > 1600px (xl)"
-      label="Компактный вид"
+      tooltip={translation[i18n.language].compactDescription}
+      label={translation[i18n.language].compact}
       icon="autofit-width"
       selected={settings.compactLayout}
       onClick={() => settings.onUpdateField('compactLayout', !settings.compactLayout)}

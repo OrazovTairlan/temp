@@ -19,11 +19,14 @@ import { Iconify } from 'src/components/iconify';
 import { axiosCopy, useAppStore } from './store/useBoundStore.js';
 import { ProfilePostItem } from './sections/user/profile-post-item.jsx';
 
+import { translation } from 'src/translation.js';
+import { useTranslation } from 'react-i18next';
+
 // ----------------------------------------------------------------------
 
 export function OtherProfileHome({ onVerify }) {
   const { id } = useParams(); // Changed to 'id' to match your latest code
-
+  const { i18n } = useTranslation();
   const { user } = useAppStore();
   const login = id;
 
@@ -57,7 +60,7 @@ export function OtherProfileHome({ onVerify }) {
       setUserPosts(postsResponse.data);
     } catch (err) {
       console.error('Failed to fetch profile data:', err);
-      setError('Не удалось загрузить профиль пользователя.');
+      setError(translation[i18n.language].error);
     } finally {
       setIsLoading(false);
     }
@@ -74,11 +77,11 @@ export function OtherProfileHome({ onVerify }) {
       if (isTest) {
         // API call to unfollow
         await axiosCopy.post(`/user/me/unfollow/${login}`);
-        setTest(false)
+        setTest(false);
       } else {
         // API call to follow
         await axiosCopy.post(`/user/me/follow/${login}`);
-        setTest(true)
+        setTest(true);
       }
 
       // Update state on success
@@ -139,7 +142,7 @@ export function OtherProfileHome({ onVerify }) {
   if (!profileUser) {
     return (
       <Alert severity="warning" sx={{ m: 3 }}>
-        Профиль не найден.
+        {translation[i18n.language].profileNotFound}
       </Alert>
     );
   }
@@ -153,13 +156,13 @@ export function OtherProfileHome({ onVerify }) {
         <Stack width={1}>
           <Typography variant="h4">{fNumber(profileUser.followers_count)}</Typography>
           <Box component="span" sx={{ color: 'text.secondary', typography: 'body2' }}>
-            Подписчики
+            {translation[i18n.language].followers}
           </Box>
         </Stack>
         <Stack width={1}>
           <Typography variant="h4">{fNumber(profileUser.followings_count)}</Typography>
           <Box component="span" sx={{ color: 'text.secondary', typography: 'body2' }}>
-            Подписки
+            {translation[i18n.language].following}
           </Box>
         </Stack>
       </Stack>
@@ -170,7 +173,9 @@ export function OtherProfileHome({ onVerify }) {
           onClick={handleFollowToggle}
           loading={isFollowLoading}
         >
-          {isTest ? 'Отписаться' : 'Подписаться'}
+          {isTest
+            ? translation[i18n.language].statusUnfollowed
+            : translation[i18n.language].statusFollowed}
         </LoadingButton>
       </Box>
 
@@ -183,8 +188,8 @@ export function OtherProfileHome({ onVerify }) {
             loading={isVerifyLoading}
           >
             {profileUser.is_verified || isVerified
-              ? 'Верифицирован'
-              : 'Верифицировать пользователя'}
+              ? translation[i18n.language].isVerified
+              : translation[i18n.language].verifyAccount}
           </LoadingButton>
         </Box>
       ) : null}
@@ -193,18 +198,18 @@ export function OtherProfileHome({ onVerify }) {
 
   const renderAbout = (
     <Card>
-      <CardHeader title="О себе" />
+      <CardHeader title={translation[i18n.language].aboutMe}/>
       <Stack spacing={2} sx={{ p: 3 }}>
         <Box sx={{ typography: 'body2' }}>
-          {profileUser.bio?.about_me || 'Пользователь еще не добавил информацию о себе.'}
+          {profileUser.bio?.about_me || translation[i18n.language].aboutMeEmpty}
         </Box>
         <Stack direction="row" spacing={2}>
           <Iconify icon="mingcute:location-fill" width={24} />
           <Box sx={{ typography: 'body2' }}>
-            {`Живет в `}
+            {translation[i18n.language].liveIn}
             <Link component="span" variant="subtitle2" color="inherit">
               {[profileUser.bio?.city, profileUser.bio?.country].filter(Boolean).join(', ') ||
-                'Местоположение не указано'}
+                translation[i18n.language].locationNot}
             </Link>
           </Box>
         </Stack>
@@ -217,7 +222,8 @@ export function OtherProfileHome({ onVerify }) {
             <Iconify icon="ic:round-business-center" width={24} />
             <Box sx={{ typography: 'body2' }}>
               {profileUser.bio.position}
-              {profileUser.bio.work_place && ` в ${profileUser.bio.work_place}`}
+              {profileUser.bio.work_place &&
+                `${translation[i18n.language].in} ${profileUser.bio.work_place}`}
             </Box>
           </Stack>
         )}
@@ -225,7 +231,7 @@ export function OtherProfileHome({ onVerify }) {
           <Stack direction="row" spacing={2}>
             <Iconify icon="solar:notebook-bold" width={24} />
             <Box sx={{ typography: 'body2' }}>
-              {`Специализация: `}
+              {`${translation[i18n.language].specialization}: `}
               <Link component="span" variant="subtitle2" color="inherit">
                 {profileUser.bio.specialization}
               </Link>
@@ -250,11 +256,9 @@ export function OtherProfileHome({ onVerify }) {
             userPosts.map((post) => <ProfilePostItem key={post.id} post={post} />)
           ) : (
             <Card>
-              <CardHeader title="Нет публикаций" />
+              <CardHeader title={translation[i18n.language].noPosts} />
               <CardContent>
-                <Typography color="text.secondary">
-                  Этот пользователь еще ничего не опубликовал.
-                </Typography>
+                <Typography color="text.secondary">{translation[i18n.language].noPosts}</Typography>
               </CardContent>
             </Card>
           )}

@@ -1,8 +1,9 @@
 /* eslint-disable */
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import { z as zod } from 'zod';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
+import { useTranslation } from 'react-i18next';
 
 import Link from '@mui/material/Link';
 import Alert from '@mui/material/Alert';
@@ -21,25 +22,30 @@ import { useBoolean } from 'src/hooks/use-boolean';
 import { Iconify } from 'src/components/iconify';
 import { Form, Field } from 'src/components/hook-form';
 
-// --- Import the Zustand store and custom axios ---
+// --- (Ensure these imports point to your actual files) ---
 import { axiosCopy, useAppStore } from '../../../store/useBoundStore.js';
-
-// ----------------------------------------------------------------------
-
-export const SignInSchema = zod.object({
-  username: zod.string().min(1, { message: 'Логин обязателен!' }),
-  password: zod
-    .string()
-    .min(1, { message: 'Пароль обязателен!' })
-    .min(6, { message: 'Пароль должен содержать не менее 6 символов!' }),
-});
+import { translation } from 'src/translation.js';
 
 // ----------------------------------------------------------------------
 
 export function JwtSignInView() {
   const router = useRouter();
+  const { i18n } = useTranslation(); // Get the i18n object for language state
 
-  // Get state and actions from the Zustand store
+  // --- Dynamic Zod Schema ---
+  // The schema is created inside the component using useMemo.
+  // It rebuilds only when the language (`i18n.language`) changes.
+  const SignInSchema = useMemo(() => (
+    zod.object({
+      username: zod.string().min(1, {
+        message: translation[i18n.language].validationLogin.usernameRequired
+      }),
+      password: zod
+        .string()
+        .min(1, { message: translation[i18n.language].validationLogin.passwordRequired })
+        .min(6, { message: translation[i18n.language].validationLogin.passwordMinLength }),
+    })
+  ), [i18n.language]); // Dependency array ensures reactivity to language changes
 
   const { setToken, setUser, token } = useAppStore();
 
@@ -58,16 +64,13 @@ export function JwtSignInView() {
 
   const {
     handleSubmit,
-    formState: { isSubmitting }, // Use isSubmitting for loading state
+    formState: { isSubmitting },
   } = methods;
 
-  // The onSubmit function now calls the API and then the Zustand store
   const onSubmit = handleSubmit(async (data) => {
-    setErrorMsg(''); // Reset local error on new submission
+    setErrorMsg('');
 
     try {
-      // 1. Create the URL-encoded form data payload using URLSearchParams.
-      // This matches the 'Content-Type: application/x-www-form-urlencoded' requirement.
       const params = new URLSearchParams();
       params.append('grant_type', 'password');
       params.append('username', data.username);
@@ -76,7 +79,6 @@ export function JwtSignInView() {
       params.append('client_id', '');
       params.append('client_secret', '');
 
-      // 2. Make a POST request with the correct headers and URL-encoded data.
       const response = await axiosCopy.post('/auth', params, {
         headers: {
           'Content-Type': 'application/x-www-form-urlencoded',
@@ -84,58 +86,51 @@ export function JwtSignInView() {
         },
       });
 
-      // 3. Extract user data and token from the API response
-      //    (Assuming the API returns { user: {...}, token: '...' })
       const { access_token: authToken } = response.data;
-
-      // 4. Call the login action from the Zustand store to save the state
       setToken(authToken);
 
       const res = await axiosCopy.get('/user/me');
       const user = res.data;
       setUser(user);
+
     } catch (error) {
-      // 5. Catch and display errors from the API call
       console.error('Login failed:', error);
       const message =
-        error.response?.data?.message || error.message || 'Ошибка входа. Проверьте данные.';
+        error.response?.data?.message || error.message || translation[i18n.language].error;
       setErrorMsg(message);
     }
   });
 
-  // This effect listens to the Zustand store for successful login and redirects
   useEffect(() => {
     if (token?.length > 0) {
-      router.push('/dashboard/user');
+      router.push('/dashboard/user'); // Or your desired route
     }
   }, [token, router]);
 
   const renderHead = (
     <Stack spacing={2} sx={{ mb: 5, textAlign: 'center' }}>
-      {/* Added Logo */}
       <Stack sx={{ px: 2, py: 5, textAlign: 'center' }}>
         <Typography
           variant="h6"
           sx={{
             color: 'text.primary',
-            fontWeight: '900', // Use a heavier font weight for "bolder"
-            textTransform: 'uppercase', // Transform the text to uppercase
-            letterSpacing: 1.5, // Add some spacing for a stylized look
+            fontWeight: '900',
+            textTransform: 'uppercase',
+            letterSpacing: 1.5,
           }}
         >
           Interlinked
         </Typography>
       </Stack>
 
-      {/* Original Content */}
       <Stack spacing={1} sx={{ mt: 2 }}>
-        <Typography variant="h5">Войти в аккаунт</Typography>
+        <Typography variant="h5">{translation[i18n.language].signIn}</Typography>
         <Stack direction="row" spacing={0.5} justifyContent="center">
           <Typography variant="body2" sx={{ color: 'text.secondary' }}>
-            Нет аккаунта?
+            {translation[i18n.language].noAccountQuestion}
           </Typography>
           <Link component={RouterLink} href={paths.auth.jwt.signUp} variant="subtitle2">
-            Зарегистрироваться
+            {translation[i18n.language].signUp}
           </Link>
         </Stack>
       </Stack>
@@ -144,21 +139,20 @@ export function JwtSignInView() {
 
   const renderForm = (
     <Stack spacing={3}>
-      <Field.Text name="username" label="Логин" InputLabelProps={{ shrink: true }} />
+      <Field.Text name="username" label={translation[i18n.language].login} InputLabelProps={{ shrink: true }} />
       <Stack spacing={1.5}>
         <Link
           component={RouterLink}
-          href="/auth/jwt/reset"
+          href={"/auth/jwt/reset"} // Corrected path
           variant="body2"
           color="inherit"
           sx={{ alignSelf: 'flex-end' }}
         >
-          Забыли пароль?
+          {translation[i18n.language].forgetPassword}
         </Link>
         <Field.Text
           name="password"
-          label="Пароль"
-          placeholder="6+ символов"
+          label={translation[i18n.language].password}
           type={password.value ? 'text' : 'password'}
           InputLabelProps={{ shrink: true }}
           InputProps={{
@@ -178,10 +172,10 @@ export function JwtSignInView() {
         size="large"
         type="submit"
         variant="contained"
-        loading={isSubmitting} // Loading state is now controlled by the form state
-        loadingIndicator="Вход..."
+        loading={isSubmitting}
+        loadingIndicator={translation[i18n.language].signInButtonLoading}
       >
-        Войти
+        {translation[i18n.language].signInButton}
       </LoadingButton>
     </Stack>
   );
@@ -191,7 +185,7 @@ export function JwtSignInView() {
       {renderHead}
 
       <Alert severity="info" sx={{ mb: 5 }}>
-        Используйте логин и пароль для входа.
+        {translation[i18n.language].signInUseLoginAndPassword}
       </Alert>
 
       {!!errorMsg && (

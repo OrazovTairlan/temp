@@ -1,8 +1,9 @@
 /* eslint-disable */
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { z as zod } from 'zod';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
+import { useTranslation } from 'react-i18next';
 import {
   Box,
   Card,
@@ -32,43 +33,10 @@ import { axiosCopy, useAppStore } from 'src/store/useBoundStore';
 import { Iconify } from 'src/components/iconify';
 import { Form, Field } from 'src/components/hook-form';
 import { useRouter } from './routes/hooks/index.js';
-import { useTranslation } from 'react-i18next';
+// ❗️ Make sure this path to your translation file is correct
 import { translation } from './translation.js';
 
-// --- Zod Schemas for Validation ---
-const GeneralInfoSchema = zod.object({
-  login: zod.string().min(1, 'Логин обязателен'),
-  firstname: zod.string().min(1, 'Имя обязательно'),
-  surname: zod.string().min(1, 'Фамилия обязательна'),
-  secondname: zod.string().optional().nullable(),
-  email: zod.string().email('Неверный формат email'),
-  birthday: zod.string().min(1, 'Дата рождения обязательна'),
-  bio: zod.object({
-    country: zod.string().optional().nullable(),
-    city: zod.string().optional().nullable(),
-    position: zod.string().optional().nullable(),
-    work_place: zod.string().optional().nullable(),
-    about_me: zod.string().optional().nullable(),
-    specialization: zod.string().optional().nullable(),
-    hobby: zod.string().optional().nullable(),
-    movies: zod.string().optional().nullable(),
-    musics: zod.string().optional().nullable(),
-    worldview: zod.string().optional().nullable(),
-  }),
-});
-
-const PasswordSchema = zod.object({
-  password: zod.string().min(6, 'Текущий пароль должен быть не менее 6 символов'),
-  new_password: zod.string().min(6, 'Новый пароль должен быть не менее 6 символов'),
-});
-
-const SupportSchema = zod.object({
-  message: zod.string().min(10, 'Сообщение должно содержать не менее 10 символов'),
-});
-
-/**
- * Recursively gets only the dirty (changed) values from the form state.
- */
+// --- Helper Function ---
 const getDirtyValues = (dirtyFields, allValues) => {
   const dirtyValues = {};
   if (!dirtyFields || !allValues) {
@@ -96,6 +64,37 @@ const getDirtyValues = (dirtyFields, allValues) => {
 // --- General Settings Form ---
 const GeneralSettingsForm = ({ userData, onUpdate }) => {
   const { i18n } = useTranslation();
+
+  // Zod schema is now defined inside the component to access i18n
+  const GeneralInfoSchema = useMemo(
+    () =>
+      zod.object({
+        login: zod.string().min(1, translation[i18n.language].validationSettings.loginRequired),
+        firstname: zod
+          .string()
+          .min(1, translation[i18n.language].validationSettings.firstnameRequired),
+        surname: zod.string().min(1, translation[i18n.language].validationSettings.surnameRequired),
+        secondname: zod.string().optional().nullable(),
+        email: zod.string().email(translation[i18n.language].validationSettings.emailInvalid),
+        birthday: zod
+          .string()
+          .min(1, translation[i18n.language].validationSettings.birthdayRequired),
+        bio: zod.object({
+          country: zod.string().optional().nullable(),
+          city: zod.string().optional().nullable(),
+          position: zod.string().optional().nullable(),
+          work_place: zod.string().optional().nullable(),
+          about_me: zod.string().optional().nullable(),
+          specialization: zod.string().optional().nullable(),
+          hobby: zod.string().optional().nullable(),
+          movies: zod.string().optional().nullable(),
+          musics: zod.string().optional().nullable(),
+          worldview: zod.string().optional().nullable(),
+        }),
+      }),
+    [i18n.language]
+  );
+
   const [avatarFile, setAvatarFile] = useState(null);
   const [avatarUrl, setAvatarUrl] = useState('');
   const [avatarPreview, setAvatarPreview] = useState('');
@@ -170,22 +169,22 @@ const GeneralSettingsForm = ({ userData, onUpdate }) => {
               <Avatar src={displayUrl} sx={{ width: 128, height: 128 }} />
             </Badge>
             <Typography variant="caption" color="text.secondary" sx={{ mt: 1, display: 'block' }}>
-              Разрешенные форматы: *.jpeg, *.jpg, *.png, *.gif
-              <br /> Максимальный размер: 5 MB
+              {translation[i18n.language].allowedFormats}
+              <br /> {translation[i18n.language].maximumSize}
             </Typography>
           </Card>
         </Grid>
         <Grid item xs={12} md={8}>
           <Card sx={{ p: 3 }}>
             <Stack spacing={2}>
-              <Typography variant="h6">Основная информация</Typography>
-              <Field.Text name="login" label="Логин" />
+              <Typography variant="h6">{translation[i18n.language].general}</Typography>
+              <Field.Text name="login" label={translation[i18n.language].login} />
               <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2}>
                 <Field.Text name="firstname" label={translation[i18n.language].firstname} />
                 <Field.Text name="surname" label={translation[i18n.language].surname} />
-                <Field.Text name="secondname" label={translation[i18n.language].secondname}/>
+                <Field.Text name="secondname" label={translation[i18n.language].secondname} />
               </Stack>
-              <Field.Text name="email" label="Email" />
+              <Field.Text name="email" label={translation[i18n.language].email} />
               <Field.Text
                 name="birthday"
                 label={translation[i18n.language].birthDate}
@@ -196,13 +195,21 @@ const GeneralSettingsForm = ({ userData, onUpdate }) => {
               <Typography variant="h6" sx={{ pt: 2 }}>
                 {translation[i18n.language].biographyAndCareer}
               </Typography>
-              <Field.Text name="bio.about_me" label={translation[i18n.language].aboutMe} multiline rows={3} />
+              <Field.Text
+                name="bio.about_me"
+                label={translation[i18n.language].aboutMe}
+                multiline
+                rows={3}
+              />
               <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2}>
-                <Field.Text name="bio.country" label={translation[i18n.language].country}/>
-                <Field.Text name="bio.city" label={translation[i18n.language].city}/>
+                <Field.Text name="bio.country" label={translation[i18n.language].country} />
+                <Field.Text name="bio.city" label={translation[i18n.language].city} />
               </Stack>
-              <Field.Text name="bio.specialization" label={translation[i18n.language].specialization} />
-              <Field.Text name="bio.work_place" label={translation[i18n.language].workPlace}/>
+              <Field.Text
+                name="bio.specialization"
+                label={translation[i18n.language].specialization}
+              />
+              <Field.Text name="bio.work_place" label={translation[i18n.language].workPlace} />
               <Field.Select name="bio.position" label={translation[i18n.language].position}>
                 {positionOptions.map((option) => (
                   <MenuItem key={option} value={option}>
@@ -216,8 +223,8 @@ const GeneralSettingsForm = ({ userData, onUpdate }) => {
               </Typography>
               <Field.Text name="bio.hobby" label={translation[i18n.language].hobby} />
               <Field.Text name="bio.movies" label={translation[i18n.language].films} />
-              <Field.Text name="bio.musics" label={translation[i18n.language].music}/>
-              <Field.Text name="bio.worldview" label={translation[i18n.language].worldvide}/>
+              <Field.Text name="bio.musics" label={translation[i18n.language].music} />
+              <Field.Text name="bio.worldview" label={translation[i18n.language].worldvide} />
             </Stack>
           </Card>
         </Grid>
@@ -229,7 +236,7 @@ const GeneralSettingsForm = ({ userData, onUpdate }) => {
           loading={isSubmitting}
           disabled={!Object.keys(dirtyFields).length && !avatarFile}
         >
-          Сохранить изменения
+          {translation[i18n.language].save}
         </LoadingButton>
       </Stack>
     </Form>
@@ -238,6 +245,22 @@ const GeneralSettingsForm = ({ userData, onUpdate }) => {
 
 // --- Security Settings Form ---
 const SecuritySettingsForm = ({ onUpdate }) => {
+  const { i18n } = useTranslation();
+
+  // Zod schema is now defined inside the component to access i18n
+  const PasswordSchema = useMemo(
+    () =>
+      zod.object({
+        password: zod
+          .string()
+          .min(6, translation[i18n.language].validationSettings.passwordCurrentMin),
+        new_password: zod
+          .string()
+          .min(6, translation[i18n.language].validationSettings.passwordNewMin),
+      }),
+    [i18n.language]
+  );
+
   const methods = useForm({
     resolver: zodResolver(PasswordSchema),
     defaultValues: { password: '', new_password: '' },
@@ -258,19 +281,27 @@ const SecuritySettingsForm = ({ onUpdate }) => {
   return (
     <Card sx={{ p: 3 }}>
       <Typography variant="h6" sx={{ mb: 2 }}>
-        Смена пароля
+        {translation[i18n.language].changePassword}
       </Typography>
       <Form methods={methods} onSubmit={handleSubmit(onSubmit)}>
         <Stack spacing={2} sx={{ maxWidth: 400 }}>
-          <Field.Text name="password" type="password" label="Текущий пароль" />
-          <Field.Text name="new_password" type="password" label="Новый пароль" />
+          <Field.Text
+            name="password"
+            type="password"
+            label={translation[i18n.language].currentPassword}
+          />
+          <Field.Text
+            name="new_password"
+            type="password"
+            label={translation[i18n.language].newPassword}
+          />
           <LoadingButton
             type="submit"
             variant="contained"
             loading={isSubmitting}
             sx={{ alignSelf: 'flex-start' }}
           >
-            Сменить пароль
+            {translation[i18n.language].changePasswordButton}
           </LoadingButton>
         </Stack>
       </Form>
@@ -280,6 +311,19 @@ const SecuritySettingsForm = ({ onUpdate }) => {
 
 // --- Support Form ---
 const SupportForm = ({ onUpdate }) => {
+  const { i18n } = useTranslation();
+
+  // Zod schema is now defined inside the component to access i18n
+  const SupportSchema = useMemo(
+    () =>
+      zod.object({
+        message: zod
+          .string()
+          .min(10, translation[i18n.language].validationSettings.supportMessageMin),
+      }),
+    [i18n.language]
+  );
+
   const methods = useForm({
     resolver: zodResolver(SupportSchema),
     defaultValues: { message: '' },
@@ -300,18 +344,23 @@ const SupportForm = ({ onUpdate }) => {
   return (
     <Card sx={{ p: 3 }}>
       <Typography variant="h6" sx={{ mb: 2 }}>
-        Техническая поддержка
+        {translation[i18n.language].support}
       </Typography>
       <Form methods={methods} onSubmit={handleSubmit(onSubmit)}>
         <Stack spacing={2}>
-          <Field.Text name="message" label="Ваше сообщение" multiline rows={6} />
+          <Field.Text
+            name="message"
+            label={translation[i18n.language].supportMessage}
+            multiline
+            rows={6}
+          />
           <LoadingButton
             type="submit"
             variant="contained"
             loading={isSubmitting}
             sx={{ alignSelf: 'flex-end' }}
           >
-            Отправить
+            {translation[i18n.language].submit}
           </LoadingButton>
         </Stack>
       </Form>
@@ -320,25 +369,26 @@ const SupportForm = ({ onUpdate }) => {
 };
 
 // --- Delete Account Form ---
-const DeleteAccountForm = ({ onOpenConfirm }) => (
-  <Card sx={{ p: 3 }}>
-    <Typography variant="h6" sx={{ mb: 1 }}>
-      Удалить аккаунт
-    </Typography>
-    <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
-      После удаления вашего аккаунта все данные будут безвозвратно утеряны. Пожалуйста, будьте
-      уверены, что хотите продолжить.
-    </Typography>
-    <LoadingButton variant="outlined" color="error" onClick={onOpenConfirm}>
-      Удалить аккаунт
-    </LoadingButton>
-  </Card>
-);
+const DeleteAccountForm = ({ onOpenConfirm }) => {
+  const { i18n } = useTranslation();
+  return (
+    <Card sx={{ p: 3 }}>
+      <Typography variant="h6" sx={{ mb: 1 }}>
+        {translation[i18n.language].deleteAccount}
+      </Typography>
+      <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
+        {translation[i18n.language].deleteAccountDescription}
+      </Typography>
+      <LoadingButton variant="outlined" color="error" onClick={onOpenConfirm}>
+        {translation[i18n.language].deleteAccount}
+      </LoadingButton>
+    </Card>
+  );
+};
 
 // --- Main Account Settings Page ---
 export const AccountSettingsPage = () => {
   const [userData, setUserData] = useState(null);
-
   const { i18n } = useTranslation();
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(true);
@@ -354,18 +404,15 @@ export const AccountSettingsPage = () => {
     setError('');
     try {
       const response = await axiosCopy.get('/user/me');
-      const user = response.data;
+      const fetchedUser = response.data;
 
-      // Deep copy to avoid mutating the original state object
-      const sanitizedUser = JSON.parse(JSON.stringify(user));
+      const sanitizedUser = JSON.parse(JSON.stringify(fetchedUser));
 
-      // Ensure bio object exists and set a default for position if needed
       if (!sanitizedUser.bio) {
         sanitizedUser.bio = {};
       }
       sanitizedUser.bio.position = sanitizedUser.bio.position ?? 'Абитуриент на Мед-универ';
 
-      // Recursively replace null values with empty strings for controlled form fields
       const replaceNullWithEmpty = (obj) => {
         Object.keys(obj).forEach((key) => {
           if (obj[key] === null) {
@@ -418,13 +465,13 @@ export const AccountSettingsPage = () => {
       }
 
       if (infoUpdated || avatarUpdated) {
-        setSuccess('Данные успешно обновлены!');
-        fetchInitialData(); // This re-fetches data for the form
+        setSuccess(translation[i18n.language].success);
+        fetchInitialData();
       } else {
-        setSuccess('Нет изменений для сохранения.');
+        setSuccess(translation[i18n.language].error);
       }
     } catch (err) {
-      // setError(err.response?.data?.detail || 'Ошибка при обновлении данных.');
+      setError(err.response?.data?.detail || translation[i18n.language].error);
     }
   };
 
@@ -433,10 +480,10 @@ export const AccountSettingsPage = () => {
     setError('');
     try {
       await axiosCopy.patch('/user/credentials', data);
-      setSuccess('Пароль успешно изменен!');
+      setSuccess(translation[i18n.language].success);
       return true;
     } catch (err) {
-      setError(err.response?.data?.detail || 'Не удалось сменить пароль.');
+      setError(err.response?.data?.detail || translation[i18n.language].error);
       return false;
     }
   };
@@ -446,10 +493,10 @@ export const AccountSettingsPage = () => {
     setError('');
     try {
       await axiosCopy.post('/support/', { message_text: data.message });
-      setSuccess('Ваше сообщение отправлено в поддержку!');
+      setSuccess(translation[i18n.language].success);
       return true;
     } catch (err) {
-      setError('Не удалось отправить сообщение.');
+      setError(translation[i18n.language].error);
       return false;
     }
   };
@@ -461,11 +508,9 @@ export const AccountSettingsPage = () => {
       await axiosCopy.delete('/user/me');
       router.push('/auth/jwt/sign-in');
       logout();
-      setSuccess('Ваш аккаунт был успешно удален.');
-      // Here you would typically trigger a logout and redirect the user.
-      // For example: logout(); router.push('/login');
+      setSuccess(translation[i18n.language].success);
     } catch (err) {
-      setError(err.response?.data?.detail || 'Не удалось удалить аккаунт.');
+      setError(err.response?.data?.detail || translation[i18n.language].error);
     } finally {
       setIsDeleting(false);
       setIsConfirmOpen(false);
@@ -478,8 +523,16 @@ export const AccountSettingsPage = () => {
       label: translation[i18n.language].general,
       icon: <Iconify icon="solar:user-id-bold" />,
     },
-    { value: 'security', label: translation[i18n.language].security, icon: <Iconify icon="solar:lock-password-bold" /> },
-    { value: 'support', label: translation[i18n.language].support, icon: <Iconify icon="solar:help-bold" /> },
+    {
+      value: 'security',
+      label: translation[i18n.language].security,
+      icon: <Iconify icon="solar:lock-password-bold" />,
+    },
+    {
+      value: 'support',
+      label: translation[i18n.language].support,
+      icon: <Iconify icon="solar:help-bold" />,
+    },
     {
       value: 'delete',
       label: translation[i18n.language].deleteAccount,
@@ -546,17 +599,19 @@ export const AccountSettingsPage = () => {
       )}
 
       <Dialog open={isConfirmOpen} onClose={() => setIsConfirmOpen(false)}>
-        <DialogTitle>Подтвердите удаление аккаунта</DialogTitle>
+        <DialogTitle> {translation[i18n.language].deleteAccountConfirmation}</DialogTitle>
         <DialogContent>
           <DialogContentText>
-            Вы уверены, что хотите удалить свой аккаунт? Это действие необратимо, и все ваши данные
-            будут потеряны.
+            {translation[i18n.language].deleteAccountConfirmationDescription}
           </DialogContentText>
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setIsConfirmOpen(false)}>Отмена</Button>
+          <Button onClick={() => setIsConfirmOpen(false)}>
+            {' '}
+            {translation[i18n.language].close}
+          </Button>
           <LoadingButton onClick={handleDeleteAccount} color="error" loading={isDeleting}>
-            Удалить
+            {translation[i18n.language].deleteAccount}
           </LoadingButton>
         </DialogActions>
       </Dialog>

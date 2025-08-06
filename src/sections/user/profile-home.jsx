@@ -59,7 +59,7 @@ export function ProfileHome({ posts, onVerify }) {
       setUserPosts(response.data); // Store fetched posts in state
     } catch (err) {
       console.error('Failed to fetch user posts:', err);
-      setError('Не удалось загрузить посты.'); // Set an error message
+      setError(translation[i18n.language].postLoadingError); // Set an error message
     } finally {
       setIsLoadingPosts(false);
     }
@@ -142,7 +142,7 @@ export function ProfileHome({ posts, onVerify }) {
       await fetchUserPosts();
     } catch (err) {
       console.error('Failed to create post:', err);
-      setError(err.response?.data?.message || 'Не удалось опубликовать пост.'); // перевести
+      setError(err.response?.data?.message || translation[i18n.language].postPublishError); // перевести
     } finally {
       setIsSubmitting(false);
     }
@@ -268,7 +268,7 @@ export function ProfileHome({ posts, onVerify }) {
             onChange={(e) => setCurrentHashtag(e.target.value)}
             onKeyDown={handleHashtagKeyDown}
             variant="outlined"
-            placeholder="например, #медицина #новости" // перевести
+            placeholder={translation[i18n.language].postPlaceholder}
           />
           <Stack direction="row" spacing={1} sx={{ mt: 1, flexWrap: 'wrap' }}>
             {hashtags.map((tag) => (

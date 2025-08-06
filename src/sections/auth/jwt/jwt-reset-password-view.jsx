@@ -1,8 +1,9 @@
 /* eslint-disable */
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { z as zod } from 'zod';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
+import { useTranslation } from 'react-i18next';
 
 import Link from '@mui/material/Link';
 import Alert from '@mui/material/Alert';
@@ -18,25 +19,31 @@ import { useBoolean } from 'src/hooks/use-boolean';
 import { Iconify } from 'src/components/iconify';
 import { Form, Field } from 'src/components/hook-form';
 import { axiosCopy } from '../../../store/useBoundStore.js';
+// ❗️ Make sure this path to your translation file is correct
+import { translation } from 'src/translation.js';
 
-// ----------------------------------------------------------------------
-
-// --- Zod Schemas ---
-const ForgotPasswordSchema = zod.object({
-  email: zod.string().min(1, 'Email обязателен').email('Неверный формат email'),
-});
-
-const ResetPasswordSchema = zod.object({
-  token: zod.string().min(1, 'Токен обязателен'),
-  new_password: zod.string().min(6, 'Пароль должен быть не менее 6 символов'),
-});
+// --- Zod Schemas are now defined inside their respective components ---
 
 // --- Child Component for the Forgot Password Form ---
 function ForgotPasswordForm({ onSetError, onSetSuccess, onSwitchView }) {
+  const { i18n } = useTranslation();
+
+  const ForgotPasswordSchema = useMemo(
+    () =>
+      zod.object({
+        email: zod
+          .string()
+          .min(1, translation[i18n.language].resetPassword.validation.emailRequired)
+          .email(translation[i18n.language].resetPassword.validation.emailInvalid),
+      }),
+    [i18n.language]
+  );
+
   const methods = useForm({
     resolver: zodResolver(ForgotPasswordSchema),
     defaultValues: { email: '' },
   });
+
   const {
     handleSubmit,
     formState: { isSubmitting },
@@ -47,11 +54,11 @@ function ForgotPasswordForm({ onSetError, onSetSuccess, onSwitchView }) {
     onSetSuccess('');
     try {
       await axiosCopy.post('/auth/forgot-password', { email: data.email });
-      onSetSuccess('Инструкции по сбросу пароля отправлены на вашу почту.');
+      onSetSuccess(translation[i18n.language].resetPassword.instructionsSent);
       onSwitchView('resetPassword');
     } catch (error) {
       onSetError(
-        error.response?.data?.detail || 'Не удалось отправить инструкции. Проверьте email.'
+        error.response?.data?.detail || translation[i18n.language].resetPassword.instructionsFailed
       );
     }
   });
@@ -59,22 +66,15 @@ function ForgotPasswordForm({ onSetError, onSetSuccess, onSwitchView }) {
   return (
     <>
       <Stack spacing={1.5} sx={{ mb: 5 }}>
-        <Link
-          component={RouterLink}
-          href={'/auth/jwt/sign-in'}
-          variant="subtitle2"
-          sx={{ alignSelf: 'center' }}
-        >
-          Вернуться ко входу
-        </Link>
+        <Typography variant="h5">{translation[i18n.language].resetPassword.title}</Typography>
         <Typography sx={{ color: 'text.secondary' }}>
-          Введите ваш email, и мы вышлем вам токен для сброса пароля.
+          {translation[i18n.language].resetPassword.forgotPasswordInstruction}
         </Typography>
       </Stack>
 
       <Form methods={methods} onSubmit={onSubmit}>
         <Stack spacing={3}>
-          <Field.Text name="email" label="Email" />
+          <Field.Text name="email" label={translation[i18n.language].resetPassword.emailLabel} />
           <LoadingButton
             fullWidth
             color="inherit"
@@ -83,7 +83,7 @@ function ForgotPasswordForm({ onSetError, onSetSuccess, onSwitchView }) {
             variant="contained"
             loading={isSubmitting}
           >
-            Отправить
+            {translation[i18n.language].resetPassword.sendButton}
           </LoadingButton>
           <Link
             component={RouterLink}
@@ -91,7 +91,7 @@ function ForgotPasswordForm({ onSetError, onSetSuccess, onSwitchView }) {
             variant="subtitle2"
             sx={{ alignSelf: 'center' }}
           >
-            Вернуться ко входу
+            {translation[i18n.language].resetPassword.returnToSignIn}
           </Link>
         </Stack>
       </Form>
@@ -101,11 +101,27 @@ function ForgotPasswordForm({ onSetError, onSetSuccess, onSwitchView }) {
 
 // --- Child Component for the Reset Password Form ---
 function ResetPasswordForm({ onSetError, onSetSuccess }) {
+  const { i18n } = useTranslation();
   const password = useBoolean();
+
+  const ResetPasswordSchema = useMemo(
+    () =>
+      zod.object({
+        token: zod
+          .string()
+          .min(1, translation[i18n.language].resetPassword.validation.tokenRequired),
+        new_password: zod
+          .string()
+          .min(6, translation[i18n.language].resetPassword.validation.passwordMin),
+      }),
+    [i18n.language]
+  );
+
   const methods = useForm({
     resolver: zodResolver(ResetPasswordSchema),
     defaultValues: { token: '', new_password: '' },
   });
+
   const {
     handleSubmit,
     formState: { isSubmitting },
@@ -116,27 +132,29 @@ function ResetPasswordForm({ onSetError, onSetSuccess }) {
     onSetSuccess('');
     try {
       await axiosCopy.post('/auth/reset-password', data);
-      onSetSuccess('Пароль успешно изменен! Теперь вы можете войти с новым паролем.');
+      onSetSuccess(translation[i18n.language].resetPassword.passwordResetSuccess);
     } catch (error) {
-      onSetError(error.response?.data?.detail || 'Неверный токен или произошла ошибка.');
+      onSetError(
+        error.response?.data?.detail || translation[i18n.language].resetPassword.resetFailed
+      );
     }
   });
 
   return (
     <>
       <Stack spacing={1.5} sx={{ mb: 5 }}>
-        <Typography variant="h5">Сброс пароля</Typography>
+        <Typography variant="h5">{translation[i18n.language].resetPassword.title}</Typography>
         <Typography sx={{ color: 'text.secondary' }}>
-          Введите токен из письма и ваш новый пароль.
+          {translation[i18n.language].resetPassword.resetPasswordInstruction}
         </Typography>
       </Stack>
 
       <Form methods={methods} onSubmit={onSubmit}>
         <Stack spacing={3}>
-          <Field.Text name="token" label="Токен" />
+          <Field.Text name="token" label={translation[i18n.language].resetPassword.tokenLabel} />
           <Field.Text
             name="new_password"
-            label="Новый пароль"
+            label={translation[i18n.language].resetPassword.newPasswordLabel}
             type={password.value ? 'text' : 'password'}
             InputProps={{
               endAdornment: (
@@ -156,7 +174,7 @@ function ResetPasswordForm({ onSetError, onSetSuccess }) {
             variant="contained"
             loading={isSubmitting}
           >
-            Установить новый пароль
+            {translation[i18n.language].resetPassword.setNewPasswordButton}
           </LoadingButton>
           <Link
             component={RouterLink}
@@ -164,7 +182,7 @@ function ResetPasswordForm({ onSetError, onSetSuccess }) {
             variant="subtitle2"
             sx={{ alignSelf: 'center' }}
           >
-            Вернуться ко входу
+            {translation[i18n.language].resetPassword.returnToSignIn}
           </Link>
         </Stack>
       </Form>

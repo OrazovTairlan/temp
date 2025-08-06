@@ -17,9 +17,12 @@ import { axiosCopy, useAppStore } from 'src/store/useBoundStore';
 import { Iconify } from 'src/components/iconify';
 import { fShortenNumber } from 'src/utils/format-number';
 
+import { translation } from 'src/translation.js';
+import { useTranslation } from 'react-i18next';
 // --- Компонент строки пользователя (UserRow) ---
 const UserRow = React.forwardRef(({ user }, ref) => {
   const [avatarUrl, setAvatarUrl] = useState('');
+  const { i18n } = useTranslation();
   // 1. УЛУЧШЕНИЕ: Состояние загрузки зависит от наличия ключа.
   // Если ключа нет, загрузка не начинается.
   const [isAvatarLoading, setIsAvatarLoading] = useState(!!user.avatar_key);
@@ -89,16 +92,17 @@ const UserRow = React.forwardRef(({ user }, ref) => {
             @{user.login}
           </Typography>
           <Typography variant="body2" color="text.secondary">
-            {user.bio?.specialization && `${user.bio.specialization} из `}
+            {user.bio?.specialization &&
+              `${user.bio.specialization} ${translation[i18n.language].from} `}
             {user.bio?.city && `${user.bio.city}, `}
             {user.bio?.country}
           </Typography>
           <Stack direction="row" spacing={2} sx={{ mt: 1 }}>
             <Typography variant="body2">
-              <strong>{fShortenNumber(user.followers_count)}</strong> Подписчики
+              <strong>{fShortenNumber(user.followers_count)}</strong> {translation[i18n.language].followers}
             </Typography>
             <Typography variant="body2">
-              <strong>{fShortenNumber(user.followings_count)}</strong> Подписки
+              <strong>{fShortenNumber(user.followings_count)}</strong> {translation[i18n.language].following}
             </Typography>
           </Stack>
         </Stack>
@@ -109,7 +113,7 @@ const UserRow = React.forwardRef(({ user }, ref) => {
             to={profileLink}
             startIcon={<Iconify icon="solar:user-id-bold" />}
           >
-            Профиль
+            {translation[i18n.language].profile}
           </Button>
         </Stack>
       </Stack>
@@ -119,6 +123,7 @@ const UserRow = React.forwardRef(({ user }, ref) => {
 
 // --- Основной компонент страницы "Люди" ---
 export const PeoplePage = () => {
+  const { i18n } = useTranslation();
   const [users, setUsers] = useState([]);
   // 3. УЛУЧШЕНИЕ: Начальное состояние загрузки - true, для корректного отображения первого лоадера
   const [isLoading, setIsLoading] = useState(true);
@@ -173,7 +178,7 @@ export const PeoplePage = () => {
         }
       } catch (err) {
         console.error('Failed to fetch users:', err);
-        setError('Не удалось загрузить список пользователей.');
+        setError(translation[i18n.language].error);
       } finally {
         setIsLoading(false);
       }
@@ -193,14 +198,14 @@ export const PeoplePage = () => {
     <DashboardContent>
       <Box sx={{ p: 3, maxWidth: 800, mx: 'auto' }}>
         <Typography variant="h4" gutterBottom sx={{ fontWeight: 'bold', mb: 3 }}>
-          Люди
+          {translation[i18n.language].people}
         </Typography>
 
         {error && <Alert severity="error">{error}</Alert>}
 
         {showEmptyMessage && (
           <Typography variant="body1" color="text.secondary" align="center" sx={{ p: 5 }}>
-            Пользователи не найдены.
+            {translation[i18n.language].usersNotFound}
           </Typography>
         )}
 
@@ -228,7 +233,7 @@ export const PeoplePage = () => {
 
         {!isLoading && !hasMore && users.length > 0 && (
           <Typography variant="body2" color="text.secondary" align="center" sx={{ p: 3 }}>
-            Вы просмотрели всех пользователей
+            {translation[i18n.language].allViewed}
           </Typography>
         )}
       </Box>

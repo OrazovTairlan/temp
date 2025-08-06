@@ -31,10 +31,22 @@ export function UserProfileView() {
   const { user } = useAppStore();
   const { i18n } = useTranslation();
   const TABS = [
-    { value: 'profile', label: translation[i18n.language].profile, icon: <Iconify icon="solar:user-id-bold" width={24} /> },
-    { value: 'followers', label: translation[i18n.language].followers, icon: <Iconify icon="solar:heart-bold" width={24} /> },
-    { value: 'followings', label: translation[i18n.language].following, icon: <Iconify icon="solar:heart-bold" width={24} /> },
-  ];
+    {
+      value: 'profile',
+      label: translation[i18n.language].profile,
+      icon: <Iconify icon="solar:user-id-bold" width={24} />
+    },
+    {
+      value: 'followers',
+      label: translation[i18n.language].followers,
+      icon: <Iconify icon="solar:users-group-rounded-bold" width={24} />
+    },
+    {
+      value: 'followings', // Or 'following'
+      label: translation[i18n.language].following,
+      icon: <Iconify icon="solar:user-plus-rounded-bold" width={24} />
+    },
+  ]
   const [avatarUrl, setAvatarUrl] = useState('');
   const [isLoadingAvatar, setIsLoadingAvatar] = useState(false);
 

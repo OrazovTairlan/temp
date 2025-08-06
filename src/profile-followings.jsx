@@ -11,7 +11,9 @@ import { LoadingButton } from '@mui/lab';
 
 import { Iconify } from 'src/components/iconify';
 import { axiosCopy } from 'src/store/useBoundStore';
+import { translation } from './translation.js';
 
+import { useTranslation } from 'react-i18next';
 // ----------------------------------------------------------------------
 
 // --- Reusable Component for fetching and displaying Avatars ---
@@ -48,6 +50,7 @@ const DynamicAvatar = ({ avatarKey, alt, sx }) => {
 
 // --- Item Component for a single user being followed ---
 function FollowingItem({ user, onFollowToggle, isUpdating }) {
+  const { i18n } = useTranslation();
   const { firstname, surname, bio, avatar_key, is_following, login, id } = user;
   const name = `${firstname} ${surname}`;
 
@@ -60,7 +63,7 @@ function FollowingItem({ user, onFollowToggle, isUpdating }) {
         secondary={
           <>
             <Iconify icon="mingcute:location-fill" width={16} sx={{ flexShrink: 0, mr: 0.5 }} />
-            {bio?.country || 'Местоположение не указано'}
+            {bio?.country || translation[i18n.language].locationNot}
           </>
         }
         primaryTypographyProps={{ noWrap: true, typography: 'subtitle2' }}
@@ -86,7 +89,9 @@ function FollowingItem({ user, onFollowToggle, isUpdating }) {
         loading={isUpdating}
         sx={{ flexShrink: 0, ml: 1.5 }}
       >
-        {is_following ? 'Вы подписаны' : 'Подписаться'}
+        {is_following
+          ? translation[i18n.language].statusFollowed
+          : translation[i18n.language].follow}
       </LoadingButton>
     </Card>
   );
@@ -94,6 +99,7 @@ function FollowingItem({ user, onFollowToggle, isUpdating }) {
 
 // --- Main Component to display all users you are following ---
 export function ProfileFollowings() {
+  const { i18n } = useTranslation();
   const [followings, setFollowings] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -108,7 +114,7 @@ export function ProfileFollowings() {
       setFollowings(response.data);
     } catch (err) {
       console.error('Failed to fetch followings:', err);
-      setError('Не удалось загрузить ваши подписки.');
+      setError(translation[i18n.language].followingError);
     } finally {
       setIsLoading(false);
     }
@@ -122,8 +128,8 @@ export function ProfileFollowings() {
     setUpdatingId(login);
 
     // Optimistically update the UI for a responsive feel
-    setFollowings(currentFollowings =>
-      currentFollowings.map(f =>
+    setFollowings((currentFollowings) =>
+      currentFollowings.map((f) =>
         f.login === login ? { ...f, is_following: !isCurrentlyFollowing } : f
       )
     );
@@ -139,8 +145,8 @@ export function ProfileFollowings() {
     } catch (err) {
       console.error('Failed to update follow status:', err);
       // Revert the UI change if the API call fails
-      setFollowings(currentFollowings =>
-        currentFollowings.map(f =>
+      setFollowings((currentFollowings) =>
+        currentFollowings.map((f) =>
           f.login === login ? { ...f, is_following: isCurrentlyFollowing } : f
         )
       );
@@ -152,7 +158,7 @@ export function ProfileFollowings() {
   return (
     <>
       <Typography variant="h4" sx={{ my: 5 }}>
-        Подписки
+        {translation[i18n.language].following}
       </Typography>
 
       {isLoading ? (

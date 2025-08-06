@@ -51,6 +51,7 @@ import { axiosCopy, useAppStore } from 'src/store/useBoundStore';
 import { Iconify } from 'src/components/iconify';
 import { Image } from 'src/components/image';
 
+import { translation } from 'src/translation.js';
 // --- Skeleton Components for Better UX ---
 
 const CommentSkeleton = () => (
@@ -91,7 +92,7 @@ const DynamicMedia = ({
   sx = {},
   onImageClick,
 }) => {
-  const { t } = useTranslation();
+  const { i18n } = useTranslation();
   const [fileUrl, setFileUrl] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
@@ -106,13 +107,13 @@ const DynamicMedia = ({
         setFileUrl(response.data);
       } catch (err) {
         console.error('Failed to fetch file URL:', err);
-        setError(t('errors.fileLoad'));
+        setError(translation[i18n.language].error);
       } finally {
         setIsLoading(false);
       }
     };
     fetchUrl();
-  }, [fileKey, t]);
+  }, [fileKey]);
 
   const initials = alt
     .split(' ')
@@ -154,7 +155,7 @@ const DynamicMedia = ({
       >
         <Iconify icon="solar:gallery-broken-bold" width={32} sx={{ color: 'text.disabled' }} />
         <Typography variant="caption" color="text.secondary" textAlign="center">
-          {error || t('errors.fileLoad')}
+          {error || translation[i18n.language].error}
         </Typography>
       </Paper>
     );
@@ -205,7 +206,7 @@ const DynamicMedia = ({
 
 // --- CommentItem Component ---
 const CommentItem = ({ comment, onDelete }) => {
-  const { t } = useTranslation();
+  const { i18n } = useTranslation();
   const { user } = useAppStore();
   const [reaction, setReaction] = useState({
     likes: comment.like_count || 0,
@@ -297,7 +298,7 @@ const CommentItem = ({ comment, onDelete }) => {
                   <Menu anchorEl={anchorEl} open={Boolean(anchorEl)} onClose={handleMenuClose}>
                     <MenuItem onClick={handleDelete} sx={{ color: 'error.main' }}>
                       <Iconify icon="solar:trash-bin-trash-bold" sx={{ mr: 1 }} />
-                      Удалить
+                      {translation[i18n.language].delete}
                     </MenuItem>
                   </Menu>
                 </>
@@ -312,7 +313,7 @@ const CommentItem = ({ comment, onDelete }) => {
           </Typography>
         </Paper>
         <Stack direction="row" alignItems="center" spacing={1} sx={{ mt: 0.5, pl: 1 }}>
-          <Tooltip title="Нравиться">
+          <Tooltip title={translation[i18n.language].like}>
             <IconButton size="small" onClick={() => handleCommentReaction('like')}>
               <Favorite
                 sx={{ fontSize: 16 }}
@@ -321,7 +322,7 @@ const CommentItem = ({ comment, onDelete }) => {
             </IconButton>
           </Tooltip>
           <Typography variant="caption">{fShortenNumber(reaction.likes)}</Typography>
-          <Tooltip title="Не нравиться">
+          <Tooltip title={translation[i18n.language].dislike}>
             <IconButton size="small" onClick={() => handleCommentReaction('dislike')}>
               <ThumbDown
                 sx={{ fontSize: 16 }}
@@ -338,7 +339,7 @@ const CommentItem = ({ comment, onDelete }) => {
 
 // --- PostItem Component ---
 const PostItem = React.forwardRef(({ post, onDelete }, ref) => {
-  const { t, i18n } = useTranslation();
+  const { i18n } = useTranslation();
   const { user } = useAppStore();
 
   // State Management
@@ -533,7 +534,7 @@ const PostItem = React.forwardRef(({ post, onDelete }, ref) => {
                 <Menu anchorEl={anchorEl} open={Boolean(anchorEl)} onClose={handleMenuClose}>
                   <MenuItem onClick={handleDeletePost} sx={{ color: 'error.main' }}>
                     <Iconify icon="solar:trash-bin-trash-bold" sx={{ mr: 1 }} />
-                    Удалить пост
+                    {translation[i18n.language].deletePost}
                   </MenuItem>
                 </Menu>
               </Stack>
@@ -574,15 +575,15 @@ const PostItem = React.forwardRef(({ post, onDelete }, ref) => {
               {/* --- Translate Button --- */}
               {text.isTranslating ? (
                 <Button size="small" disabled startIcon={<CircularProgress size={16} />}>
-                  Переводиться
+                  {translation[i18n.language].inTranslation}
                 </Button>
               ) : text.isTranslated ? (
                 <Button size="small" onClick={handleShowOriginal} startIcon={<Translate />}>
-                  Показать оригинал
+                  {translation[i18n.language].showOriginal}
                 </Button>
               ) : (
                 <Button size="small" onClick={handleTranslate} startIcon={<Translate />}>
-                  Перевести
+                  {translation[i18n.language].translate}
                 </Button>
               )}
 
@@ -692,7 +693,7 @@ const PostItem = React.forwardRef(({ post, onDelete }, ref) => {
                       fullWidth
                       value={newComment}
                       onChange={(e) => setNewComment(e.target.value)}
-                      placeholder="Введите Ваш текст"
+                      placeholder={translation[i18n.language].writeComment}
                       onKeyPress={(e) => e.key === 'Enter' && handlePostComment()}
                       endAdornment={
                         <InputAdornment position="end">
@@ -762,7 +763,7 @@ const PostItem = React.forwardRef(({ post, onDelete }, ref) => {
 
 // --- Main Feed Component ---
 export const SocialMediaFeed = () => {
-  const { t } = useTranslation();
+  const { i18n } = useTranslation();
   const [posts, setPosts] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [page, setPage] = useState(1);
@@ -839,11 +840,11 @@ export const SocialMediaFeed = () => {
       <Box sx={{ maxWidth: 1200, width: '100%', mx: 'auto' }}>
         <Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ p: 2 }}>
           <Typography variant="h4" fontWeight="bold">
-            Лента
+            {translation[i18n.language].feeds}
           </Typography>
           <ToggleButtonGroup value={order} exclusive onChange={handleOrderChange} size="small">
-            <ToggleButton value="desc">Сначала новые</ToggleButton>
-            <ToggleButton value="asc">Сначала поздние</ToggleButton>
+            <ToggleButton value="desc">{translation[i18n.language].newest}</ToggleButton>
+            <ToggleButton value="asc">{translation[i18n.language].latest}</ToggleButton>
           </ToggleButtonGroup>
         </Stack>
 
@@ -880,7 +881,7 @@ export const SocialMediaFeed = () => {
             align="center"
             sx={{ display: 'block', p: 3 }}
           >
-            Вы всё просмотрели
+            {translation[i18n.language].allViewed}
           </Typography>
         )}
       </Box>

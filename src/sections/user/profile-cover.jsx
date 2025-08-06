@@ -14,6 +14,9 @@ import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 // Custom theme styles (assumed to exist)
 import { varAlpha, bgGradient } from 'src/theme/styles';
 import Chip from '@mui/material/Chip';
+import { useTranslation } from 'react-i18next';
+
+import { translation } from 'src/translation.js';
 
 // ----------------------------------------------------------------------
 
@@ -29,6 +32,7 @@ import Chip from '@mui/material/Chip';
  */
 export function ProfileCover({ name, isVerified, avatarUrl, role, coverUrl }) {
   const theme = useTheme();
+  const { i18n } = useTranslation();
 
   return (
     <Box
@@ -98,15 +102,19 @@ export function ProfileCover({ name, isVerified, avatarUrl, role, coverUrl }) {
               justifyContent={{ xs: 'center', md: 'flex-start' }}
               sx={{ mt: 1 }}
             >
-              <Typography variant="body2" color="text.primary"  sx={{
-                color: 'white !important',
-              }}>
+              <Typography
+                variant="body2"
+                color="text.primary"
+                sx={{
+                  color: 'white !important',
+                }}
+              >
                 @{role.login}
               </Typography>
 
               {role.role === 'admin' && (
                 <Chip
-                  label="Администратор"
+                  label={translation[i18n.language].isAdmin}
                   size="small"
                   color="primary"
                   variant="soft"

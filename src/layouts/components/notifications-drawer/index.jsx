@@ -1,6 +1,7 @@
 /* eslint-disable */
 import { m } from 'framer-motion';
 import { useState, useCallback, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 
 import Tab from '@mui/material/Tab';
 import Box from '@mui/material/Box';
@@ -11,34 +12,26 @@ import Button from '@mui/material/Button';
 import Tooltip from '@mui/material/Tooltip';
 import Typography from '@mui/material/Typography';
 import IconButton from '@mui/material/IconButton';
+import ListItemText from '@mui/material/ListItemText';
+import ListItemAvatar from '@mui/material/ListItemAvatar';
+import ListItemButton from '@mui/material/ListItemButton';
+import Avatar from '@mui/material/Avatar';
 
 import { useBoolean } from 'src/hooks/use-boolean';
 import { useAppStore, axiosCopy } from 'src/store/useBoundStore';
+import { fToNow } from 'src/utils/format-time';
 
 import { Label } from 'src/components/label';
 import { Iconify } from 'src/components/iconify';
 import { Scrollbar } from 'src/components/scrollbar';
 import { CustomTabs } from 'src/components/custom-tabs';
 import { varHover } from 'src/components/animate';
-
-// --- NotificationItem Component ---
-import ListItemText from '@mui/material/ListItemText';
-import ListItemAvatar from '@mui/material/ListItemAvatar';
-import ListItemButton from '@mui/material/ListItemButton';
-import Avatar from '@mui/material/Avatar';
-import { fToNow } from 'src/utils/format-time';
 import { CONFIG } from 'src/config-global';
+// ❗️ Make sure this path to your translation file is correct
+import { translation } from 'src/translation.js';
 
 const MEDIA_BASE_URL = 'http://localhost:8000/files/'; // Or your S3 base URL
-
-// ----------------------------------------------------------------------
-
-const TABS = [
-  { value: 'all', label: 'Все' },
-  { value: 'unread', label: 'Непрочитанные' },
-];
-
-const WEBSOCKET_URL = 'wss://newinterlinked.com/api/ws'; // Replace with your actual WebSocket URL
+const WEBSOCKET_URL = 'wss://newinterlinked.com/api/ws';
 
 // --- Custom Hook for Notifications Logic ---
 const useNotifications = () => {
@@ -59,13 +52,17 @@ const useNotifications = () => {
 
   // WebSocket connection
   useEffect(() => {
-    const ws = new WebSocket(WEBSOCKET_URL + '?token=' + token);
+    if (!token) return;
+    const ws = new WebSocket(`${WEBSOCKET_URL}?token=${token}`);
     ws.onmessage = (event) => {
       const data = JSON.parse(event.data);
       handleNewNotification(data);
     };
-    return () => ws.close();
-  }, []);
+    // Proper cleanup
+    return () => {
+      ws.close();
+    };
+  }, [token]);
 
   // Fetch notifications from the API
   const fetchNotifications = useCallback(
@@ -134,6 +131,12 @@ const useNotifications = () => {
 // ----------------------------------------------------------------------
 
 export function NotificationsDrawer() {
+  const { i18n } = useTranslation();
+  const TABS = [
+    { value: 'all', label: translation[i18n.language].notifications.all },
+    { value: 'unread', label: translation[i18n.language].notifications.unread },
+  ];
+
   const { isOpenNotificationMenu, toggleNotificationMenu } = useAppStore();
   const [currentTab, setCurrentTab] = useState('all');
   const {
@@ -159,10 +162,10 @@ export function NotificationsDrawer() {
   const renderHead = (
     <Stack direction="row" alignItems="center" sx={{ py: 2, pl: 2.5, pr: 1, minHeight: 68 }}>
       <Typography variant="h6" sx={{ flexGrow: 1 }}>
-        Уведомления
+        {translation[i18n.language].notifications.title}
       </Typography>
       {!!totalUnRead && (
-        <Tooltip title="Отметить все как прочитанные">
+        <Tooltip title={translation[i18n.language].notifications.markAllAsRead}>
           <IconButton color="primary" onClick={markAllAsRead}>
             <Iconify icon="eva:done-all-fill" />
           </IconButton>
@@ -183,7 +186,7 @@ export function NotificationsDrawer() {
           value={tab.value}
           label={tab.label}
           icon={
-            tab.value === 'unread' ? (
+            tab.value === 'unread' && totalUnRead > 0 ? (
               <Label variant="filled" color="info">
                 {totalUnRead}
               </Label>
@@ -197,7 +200,9 @@ export function NotificationsDrawer() {
   const renderList = (
     <Scrollbar>
       {isLoading && notifications.length === 0 ? (
-        <Typography sx={{ p: 3, textAlign: 'center' }}>Загрузка...</Typography>
+        <Typography sx={{ p: 3, textAlign: 'center' }}>
+          {translation[i18n.language].notifications.loading}
+        </Typography>
       ) : (
         <Box component="ul">
           {notifications.map((notification) => (
@@ -223,39 +228,43 @@ export function NotificationsDrawer() {
       {renderList}
       <Box sx={{ p: 1 }}>
         <Button fullWidth size="large">
-          Посмотреть все
+          {translation[i18n.language].notifications.viewAll}
         </Button>
       </Box>
     </Drawer>
   );
 }
 
-function getNotificationContent(notification) {
+function getNotificationContent(notification, translations) {
   const { type, sender } = notification;
-  const senderName = sender ? `**${sender.firstname} ${sender.surname}**` : 'System';
+  const senderName = sender ? `**${sender.firstname} ${sender.surname}**` : translations.system;
+
+  const message = notification.message || translations.defaultGlobalMessage;
 
   switch (type) {
     case 'GLOBAL':
       return {
         avatar: `${CONFIG.site.basePath}/assets/icons/notification/ic-order.svg`,
-        title: `Системное уведомление: ${notification.message || 'Новое обновление!'}`,
+        title: translations.globalNotification.replace('{message}', message),
       };
     case 'FOLLOWER':
       return {
         avatar: sender?.avatar_key ? `${MEDIA_BASE_URL}${sender.avatar_key}` : null,
-        title: `${senderName} подписался на вас.`,
+        title: translations.newFollower.replace('{senderName}', senderName),
       };
     // Add other cases like 'COMMENT', 'LIKE', etc.
     default:
       return {
         avatar: null,
-        title: `Новое уведомление.`,
+        title: translations.defaultNotification,
       };
   }
 }
 
 export function NotificationItem({ notification, onMarkAsRead }) {
-  const { avatar, title } = getNotificationContent(notification);
+  const { i18n } = useTranslation();
+  // Pass the relevant translation object to the helper function
+  const { avatar, title } = getNotificationContent(notification, translation[i18n.language].notifications);
 
   const handleItemClick = () => {
     if (notification.isUnRead) {
