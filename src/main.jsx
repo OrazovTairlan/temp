@@ -3,6 +3,13 @@ import { Suspense, StrictMode } from 'react';
 import { BrowserRouter } from 'react-router-dom';
 import { HelmetProvider } from 'react-helmet-async';
 
+
+
+
+
+
+// eslint-disable-next-line import/extensions
+import './i18n.js';
 import App from './app';
 import { CONFIG } from './config-global';
 

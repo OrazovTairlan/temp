@@ -18,6 +18,8 @@ import { LanguagePopover } from '../components/language-popover';
 import { ContactsPopover } from '../components/contacts-popover';
 import { WorkspacesPopover } from '../components/workspaces-popover';
 import { NotificationsDrawer } from '../components/notifications-drawer';
+import { ChangePopover } from '../../ChangePopover.jsx';
+import { useTranslation } from 'react-i18next';
 
 // ----------------------------------------------------------------------
 
@@ -74,6 +76,7 @@ export function HeaderBase({
 }) {
   const theme = useTheme();
 
+  const { t, i18n } = useTranslation();
   return (
     <HeaderSection
       sx={sx}
@@ -118,7 +121,7 @@ export function HeaderBase({
               data-area="right"
               sx={{
                 display: 'flex',
-                width: "100%",
+                width: '100%',
                 alignItems: 'center',
                 gap: { xs: 1, sm: 1.5 },
               }}
@@ -140,8 +143,8 @@ export function HeaderBase({
               {searchbar && <Searchbar data-slot="searchbar" data={data?.nav} />}
 
               {/* -- Language popover -- */}
-              {/*{localization && <LanguagePopover data-slot="localization" data={data?.langs} />}*/}
-
+              {localization && <ChangePopover />}
+              {/* {i18n.language} */}
               {/* -- Notifications popover -- */}
               {notifications && (
                 <NotificationsDrawer data-slot="notifications" data={data?.notifications} />

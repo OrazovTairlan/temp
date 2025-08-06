@@ -32,6 +32,8 @@ import { axiosCopy, useAppStore } from 'src/store/useBoundStore';
 import { Iconify } from 'src/components/iconify';
 import { Form, Field } from 'src/components/hook-form';
 import { useRouter } from './routes/hooks/index.js';
+import { useTranslation } from 'react-i18next';
+import { translation } from './translation.js';
 
 // --- Zod Schemas for Validation ---
 const GeneralInfoSchema = zod.object({
@@ -93,6 +95,7 @@ const getDirtyValues = (dirtyFields, allValues) => {
 
 // --- General Settings Form ---
 const GeneralSettingsForm = ({ userData, onUpdate }) => {
+  const { i18n } = useTranslation();
   const [avatarFile, setAvatarFile] = useState(null);
   const [avatarUrl, setAvatarUrl] = useState('');
   const [avatarPreview, setAvatarPreview] = useState('');
@@ -178,29 +181,29 @@ const GeneralSettingsForm = ({ userData, onUpdate }) => {
               <Typography variant="h6">Основная информация</Typography>
               <Field.Text name="login" label="Логин" />
               <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2}>
-                <Field.Text name="firstname" label="Имя" />
-                <Field.Text name="surname" label="Фамилия" />
-                <Field.Text name="secondname" label="Отчество" />
+                <Field.Text name="firstname" label={translation[i18n.language].firstname} />
+                <Field.Text name="surname" label={translation[i18n.language].surname} />
+                <Field.Text name="secondname" label={translation[i18n.language].secondname}/>
               </Stack>
               <Field.Text name="email" label="Email" />
               <Field.Text
                 name="birthday"
-                label="Дата рождения"
+                label={translation[i18n.language].birthDate}
                 type="date"
                 InputLabelProps={{ shrink: true }}
               />
 
               <Typography variant="h6" sx={{ pt: 2 }}>
-                Биография и карьера
+                {translation[i18n.language].biographyAndCareer}
               </Typography>
-              <Field.Text name="bio.about_me" label="О себе" multiline rows={3} />
+              <Field.Text name="bio.about_me" label={translation[i18n.language].aboutMe} multiline rows={3} />
               <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2}>
-                <Field.Text name="bio.country" label="Страна" />
-                <Field.Text name="bio.city" label="Город" />
+                <Field.Text name="bio.country" label={translation[i18n.language].country}/>
+                <Field.Text name="bio.city" label={translation[i18n.language].city}/>
               </Stack>
-              <Field.Text name="bio.specialization" label="Специализация" />
-              <Field.Text name="bio.work_place" label="Место работы" />
-              <Field.Select name="bio.position" label="Должность">
+              <Field.Text name="bio.specialization" label={translation[i18n.language].specialization} />
+              <Field.Text name="bio.work_place" label={translation[i18n.language].workPlace}/>
+              <Field.Select name="bio.position" label={translation[i18n.language].position}>
                 {positionOptions.map((option) => (
                   <MenuItem key={option} value={option}>
                     {option}
@@ -209,12 +212,12 @@ const GeneralSettingsForm = ({ userData, onUpdate }) => {
               </Field.Select>
 
               <Typography variant="h6" sx={{ pt: 2 }}>
-                Интересы и взгляды
+                {translation[i18n.language].interestingAndOpinions}
               </Typography>
-              <Field.Text name="bio.hobby" label="Хобби" />
-              <Field.Text name="bio.movies" label="Любимые фильмы" />
-              <Field.Text name="bio.musics" label="Любимая музыка" />
-              <Field.Text name="bio.worldview" label="Мировоззрение" />
+              <Field.Text name="bio.hobby" label={translation[i18n.language].hobby} />
+              <Field.Text name="bio.movies" label={translation[i18n.language].films} />
+              <Field.Text name="bio.musics" label={translation[i18n.language].music}/>
+              <Field.Text name="bio.worldview" label={translation[i18n.language].worldvide}/>
             </Stack>
           </Card>
         </Grid>
@@ -336,6 +339,7 @@ const DeleteAccountForm = ({ onOpenConfirm }) => (
 export const AccountSettingsPage = () => {
   const [userData, setUserData] = useState(null);
 
+  const { i18n } = useTranslation();
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState('');
@@ -469,12 +473,16 @@ export const AccountSettingsPage = () => {
   };
 
   const TABS = [
-    { value: 'general', label: 'Общие', icon: <Iconify icon="solar:user-id-bold" /> },
-    { value: 'security', label: 'Безопасность', icon: <Iconify icon="solar:lock-password-bold" /> },
-    { value: 'support', label: 'Поддержка', icon: <Iconify icon="solar:help-bold" /> },
+    {
+      value: 'general',
+      label: translation[i18n.language].general,
+      icon: <Iconify icon="solar:user-id-bold" />,
+    },
+    { value: 'security', label: translation[i18n.language].security, icon: <Iconify icon="solar:lock-password-bold" /> },
+    { value: 'support', label: translation[i18n.language].support, icon: <Iconify icon="solar:help-bold" /> },
     {
       value: 'delete',
-      label: 'Удалить аккаунт',
+      label: translation[i18n.language].deleteAccount,
       icon: <Iconify icon="solar:trash-bin-trash-bold" />,
     },
   ];
@@ -482,7 +490,7 @@ export const AccountSettingsPage = () => {
   return (
     <DashboardContent>
       <Typography variant="h4" sx={{ mb: 3 }}>
-        Настройки аккаунта
+        {translation[i18n.language].settings}
       </Typography>
       <Tabs value={currentTab} onChange={handleTabChange} sx={{ mb: 3 }}>
         {TABS.filter((item) => {

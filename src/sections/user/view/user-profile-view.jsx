@@ -17,20 +17,24 @@ import { ProfileHome } from '../profile-home';
 import { ProfileCover } from '../profile-cover';
 import { ProfileFollowers } from '../profile-followers';
 import { ProfileFollowings } from '../../../profile-followings.jsx';
+import { useTranslation } from 'react-i18next';
+import { translation } from '../../../translation.js';
 // import { ProfileFriends } from '../profile-friends'; // Assuming this will be implemented later
 
 // ----------------------------------------------------------------------
 
-const TABS = [
-  { value: 'profile', label: 'Профиль', icon: <Iconify icon="solar:user-id-bold" width={24} /> },
-  { value: 'followers', label: 'Подписчики', icon: <Iconify icon="solar:heart-bold" width={24} /> },
-  { value: 'followings', label: 'Подписки', icon: <Iconify icon="solar:heart-bold" width={24} /> },
-];
+
 
 // ----------------------------------------------------------------------
 
 export function UserProfileView() {
   const { user } = useAppStore();
+  const { i18n } = useTranslation();
+  const TABS = [
+    { value: 'profile', label: translation[i18n.language].profile, icon: <Iconify icon="solar:user-id-bold" width={24} /> },
+    { value: 'followers', label: translation[i18n.language].followers, icon: <Iconify icon="solar:heart-bold" width={24} /> },
+    { value: 'followings', label: translation[i18n.language].following, icon: <Iconify icon="solar:heart-bold" width={24} /> },
+  ];
   const [avatarUrl, setAvatarUrl] = useState('');
   const [isLoadingAvatar, setIsLoadingAvatar] = useState(false);
 
@@ -78,8 +82,8 @@ export function UserProfileView() {
   return (
     <DashboardContent>
       <CustomBreadcrumbs
-        heading="Профиль"
-        links={[{ name: 'Пользователь', href: paths.dashboard.user.root }, { name: userName }]}
+        heading={translation[i18n.language].profile}
+        links={[{ name: translation[i18n.language].user, href: paths.dashboard.user.root }, { name: userName }]}
         sx={{ mb: { xs: 3, md: 5 } }}
       />
 

@@ -23,11 +23,14 @@ import { ProfilePostItem } from './profile-post-item';
 import { axiosCopy, useAppStore } from '../../store/useBoundStore.js';
 import { useRouter } from '../../routes/hooks/index.js';
 import { LoadingButton } from '@mui/lab';
+import { translation } from '../../translation.js';
+import { useTranslation } from 'react-i18next';
 
 // ----------------------------------------------------------------------
 
 export function ProfileHome({ posts, onVerify }) {
   const { user } = useAppStore();
+  const { i18n } = useTranslation();
   const fileRef = useRef(null);
 
   // --- State for posts from API ---
@@ -139,7 +142,7 @@ export function ProfileHome({ posts, onVerify }) {
       await fetchUserPosts();
     } catch (err) {
       console.error('Failed to create post:', err);
-      setError(err.response?.data?.message || 'Не удалось опубликовать пост.');
+      setError(err.response?.data?.message || 'Не удалось опубликовать пост.'); // перевести
     } finally {
       setIsSubmitting(false);
     }
@@ -167,13 +170,13 @@ export function ProfileHome({ posts, onVerify }) {
           <Stack width={1}>
             {fNumber(user.followers_count)}
             <Box component="span" sx={{ color: 'text.secondary', typography: 'body2' }}>
-              Подписчики
+              {translation[i18n.language].followers}
             </Box>
           </Stack>
           <Stack width={1}>
             {fNumber(user.followings_count)}
             <Box component="span" sx={{ color: 'text.secondary', typography: 'body2' }}>
-              Подписки
+              {translation[i18n.language].following}
             </Box>
           </Stack>
         </Stack>
@@ -187,7 +190,7 @@ export function ProfileHome({ posts, onVerify }) {
             handleNavigate(user.id);
           }}
         >
-          Просмотр личной информации
+          {translation[i18n.language].viewBio}
         </Button>
       </Stack>
     </Card>
@@ -195,18 +198,18 @@ export function ProfileHome({ posts, onVerify }) {
 
   const renderAbout = (
     <Card>
-      <CardHeader title="О себе" />
+      <CardHeader title={translation[i18n.language].aboutMe} />
       <Stack spacing={2} sx={{ p: 3 }}>
         <Box sx={{ typography: 'body2' }}>
-          {user.bio?.about_me || 'Пользователь еще не добавил информацию о себе.'}
+          {user.bio?.about_me || translation[i18n.language].aboutMeEmpty}
         </Box>
         <Stack direction="row" spacing={2}>
           <Iconify icon="mingcute:location-fill" width={24} />
           <Box sx={{ typography: 'body2' }}>
-            {`Живет в `}
+            {translation[i18n.language].liveIn}
             <Link variant="subtitle2" color="inherit">
               {[user.bio?.city, user.bio?.country].filter(Boolean).join(', ') ||
-                'Местоположение не указано'}
+                translation[i18n.language].locationNot}
             </Link>
           </Box>
         </Stack>
@@ -227,7 +230,7 @@ export function ProfileHome({ posts, onVerify }) {
           <Stack direction="row" spacing={2}>
             <Iconify icon="solar:notebook-bold" width={24} />
             <Box sx={{ typography: 'body2' }}>
-              {`Специализация: `}
+              {translation[i18n.language].specialization}
               <Link variant="subtitle2" color="inherit">
                 {user.bio.specialization}
               </Link>
@@ -243,7 +246,7 @@ export function ProfileHome({ posts, onVerify }) {
       <Stack spacing={2}>
         <TextField
           fullWidth
-          label="Заголовок"
+          label={translation[i18n.language].title}
           value={postTitle}
           onChange={(e) => setPostTitle(e.target.value)}
           variant="outlined"
@@ -252,7 +255,7 @@ export function ProfileHome({ posts, onVerify }) {
           multiline
           fullWidth
           rows={4}
-          label="О чем вы думаете?"
+          label={translation[i18n.language].whatDoYouThinkAbout}
           value={postContent}
           onChange={(e) => setPostContent(e.target.value)}
           variant="outlined"
@@ -260,12 +263,12 @@ export function ProfileHome({ posts, onVerify }) {
         <Box>
           <TextField
             fullWidth
-            label="Хэштеги (введите и нажмите Enter или пробел)"
+            label={translation[i18n.language].whatDoYouThinkAbout}
             value={currentHashtag}
             onChange={(e) => setCurrentHashtag(e.target.value)}
             onKeyDown={handleHashtagKeyDown}
             variant="outlined"
-            placeholder="например, #медицина #новости"
+            placeholder="например, #медицина #новости" // перевести
           />
           <Stack direction="row" spacing={1} sx={{ mt: 1, flexWrap: 'wrap' }}>
             {hashtags.map((tag) => (
@@ -311,7 +314,7 @@ export function ProfileHome({ posts, onVerify }) {
             startIcon={<Iconify icon="solar:gallery-wide-bold" />}
             onClick={handleAttach}
           >
-            Фото/Видео
+            {translation[i18n.language].photoVideo}
           </Button>
         </Stack>
         <Button
@@ -319,10 +322,9 @@ export function ProfileHome({ posts, onVerify }) {
           onClick={handleSubmitPost}
           disabled={isSubmitting || !postTitle || !postContent}
         >
-          {isSubmitting ? 'Публикация...' : 'Опубликовать'}
+          {isSubmitting ? translation[i18n.language].inPublishing : translation[i18n.language].publish}
         </Button>
       </Stack>
-
       <input
         ref={fileRef}
         type="file"
