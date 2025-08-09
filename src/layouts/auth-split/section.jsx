@@ -8,6 +8,7 @@ import { RouterLink } from 'src/routes/components';
 
 import { CONFIG } from 'src/config-global';
 import { varAlpha, bgGradient } from 'src/theme/styles';
+import { ChangePopover } from '../../ChangePopover.jsx';
 
 // ----------------------------------------------------------------------
 
@@ -63,6 +64,8 @@ export function Section({
         )}
       </div>
 
+
+      <ChangePopover/>
       <Box
         component="img"
         alt="Dashboard illustration"

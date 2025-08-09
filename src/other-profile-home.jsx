@@ -21,11 +21,14 @@ import { ProfilePostItem } from './sections/user/profile-post-item.jsx';
 
 import { translation } from 'src/translation.js';
 import { useTranslation } from 'react-i18next';
+import { useRouter } from './routes/hooks/index.js';
+import Button from '@mui/material/Button';
 
 // ----------------------------------------------------------------------
 
 export function OtherProfileHome({ onVerify }) {
   const { id } = useParams(); // Changed to 'id' to match your latest code
+  const router = useRouter();
   const { i18n } = useTranslation();
   const { user } = useAppStore();
   const login = id;
@@ -65,6 +68,9 @@ export function OtherProfileHome({ onVerify }) {
       setIsLoading(false);
     }
   }, [login]);
+  const handleView = (id) => {
+    router.push('/dashboard/user/personal-profile/' + id);
+  };
 
   useEffect(() => {
     fetchProfileData();
@@ -174,9 +180,22 @@ export function OtherProfileHome({ onVerify }) {
           loading={isFollowLoading}
         >
           {isTest
-            ? translation[i18n.language].statusUnfollowed
-            : translation[i18n.language].statusFollowed}
+            ? translation[i18n.language].statusFollowed
+            : translation[i18n.language].statusUnfollowed}
         </LoadingButton>
+      </Box>
+
+      <Box sx={{ mt: 3, px: 2 }}>
+        <Button
+          fullWidth
+          variant="outlined"
+          color="inherit"
+          onClick={() => {
+            handleView(user.id);
+          }}
+        >
+          {translation[i18n.language].viewBio}
+        </Button>
       </Box>
 
       {user.role == 'admin' ? (
@@ -198,7 +217,7 @@ export function OtherProfileHome({ onVerify }) {
 
   const renderAbout = (
     <Card>
-      <CardHeader title={translation[i18n.language].aboutMe}/>
+      <CardHeader title={translation[i18n.language].aboutMe} />
       <Stack spacing={2} sx={{ p: 3 }}>
         <Box sx={{ typography: 'body2' }}>
           {profileUser.bio?.about_me || translation[i18n.language].aboutMeEmpty}

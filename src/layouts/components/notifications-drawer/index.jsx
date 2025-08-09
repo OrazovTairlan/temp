@@ -1,12 +1,11 @@
 /* eslint-disable */
 import { m } from 'framer-motion';
-import { useState, useCallback, useEffect } from 'react';
+import { useState, useCallback, useEffect, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import Tab from '@mui/material/Tab';
 import Box from '@mui/material/Box';
 import Stack from '@mui/material/Stack';
-import Badge from '@mui/material/Badge';
 import Drawer from '@mui/material/Drawer';
 import Button from '@mui/material/Button';
 import Tooltip from '@mui/material/Tooltip';
@@ -17,7 +16,6 @@ import ListItemAvatar from '@mui/material/ListItemAvatar';
 import ListItemButton from '@mui/material/ListItemButton';
 import Avatar from '@mui/material/Avatar';
 
-import { useBoolean } from 'src/hooks/use-boolean';
 import { useAppStore, axiosCopy } from 'src/store/useBoundStore';
 import { fToNow } from 'src/utils/format-time';
 
@@ -25,32 +23,27 @@ import { Label } from 'src/components/label';
 import { Iconify } from 'src/components/iconify';
 import { Scrollbar } from 'src/components/scrollbar';
 import { CustomTabs } from 'src/components/custom-tabs';
-import { varHover } from 'src/components/animate';
 import { CONFIG } from 'src/config-global';
-// ❗️ Make sure this path to your translation file is correct
 import { translation } from 'src/translation.js';
 
-const MEDIA_BASE_URL = 'http://localhost:8000/files/'; // Or your S3 base URL
 const WEBSOCKET_URL = 'wss://newinterlinked.com/api/ws';
 
-// --- Custom Hook for Notifications Logic ---
+// --- Custom Hook for Notifications Logic (No changes here) ---
 const useNotifications = () => {
   const [notifications, setNotifications] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
   const [pagination, setPagination] = useState({ page: 1, size: 20, hasMore: true });
-
   const { token } = useAppStore();
-  // Add new notifications from WebSocket to the top of the list
+
   const handleNewNotification = (data) => {
     const newNotification = {
       ...data,
-      id: `notif-${Date.now()}`, // Generate a unique key for the new item
+      id: `notif-${Date.now()}`,
       isUnRead: true,
     };
     setNotifications((prev) => [newNotification, ...prev]);
   };
 
-  // WebSocket connection
   useEffect(() => {
     if (!token) return;
     const ws = new WebSocket(`${WEBSOCKET_URL}?token=${token}`);
@@ -58,16 +51,14 @@ const useNotifications = () => {
       const data = JSON.parse(event.data);
       handleNewNotification(data);
     };
-    // Proper cleanup
     return () => {
       ws.close();
     };
   }, [token]);
 
-  // Fetch notifications from the API
   const fetchNotifications = useCallback(
     async (active = true) => {
-      if (!pagination.hasMore && active) return; // Don't fetch if no more pages
+      if (!pagination.hasMore && active) return;
       setIsLoading(true);
       try {
         const response = await axiosCopy.get('/notifications', {
@@ -96,7 +87,6 @@ const useNotifications = () => {
     [pagination.page, pagination.size, pagination.hasMore]
   );
 
-  // Mark all as read
   const markAllAsRead = async () => {
     try {
       await axiosCopy.post('/notifications/read');
@@ -106,14 +96,12 @@ const useNotifications = () => {
     }
   };
 
-  // Mark a single notification as read
   const markOneAsRead = async (id) => {
     setNotifications((prev) => prev.map((n) => (n.id === id ? { ...n, isUnRead: false } : n)));
     try {
       await axiosCopy.post(`/notification/read/${id}`);
     } catch (error) {
       console.error(`Failed to mark notification ${id} as read:`, error);
-      // Revert optimistic update on failure
       setNotifications((prev) => prev.map((n) => (n.id === id ? { ...n, isUnRead: true } : n)));
     }
   };
@@ -235,36 +223,63 @@ export function NotificationsDrawer() {
   );
 }
 
-function getNotificationContent(notification, translations) {
-  const { type, sender } = notification;
-  const senderName = sender ? `**${sender.firstname} ${sender.surname}**` : translations.system;
-
-  const message = notification.message || translations.defaultGlobalMessage;
-
-  switch (type) {
-    case 'GLOBAL':
-      return {
-        avatar: `${CONFIG.site.basePath}/assets/icons/notification/ic-order.svg`,
-        title: translations.globalNotification.replace('{message}', message),
-      };
-    case 'FOLLOWER':
-      return {
-        avatar: sender?.avatar_key ? `${MEDIA_BASE_URL}${sender.avatar_key}` : null,
-        title: translations.newFollower.replace('{senderName}', senderName),
-      };
-    // Add other cases like 'COMMENT', 'LIKE', etc.
-    default:
-      return {
-        avatar: null,
-        title: translations.defaultNotification,
-      };
-  }
-}
+// ----------------------------------------------------------------------
+// ❗️❗️❗️ **MAJOR CHANGE HERE** ❗️❗️❗️
+// The logic from `getNotificationContent` is now inside `NotificationItem`
+// to properly handle asynchronous avatar URL fetching.
+// ----------------------------------------------------------------------
 
 export function NotificationItem({ notification, onMarkAsRead }) {
   const { i18n } = useTranslation();
-  // Pass the relevant translation object to the helper function
-  const { avatar, title } = getNotificationContent(notification, translation[i18n.language].notifications);
+  const [avatarUrl, setAvatarUrl] = useState('');
+
+  // **FIX:** Fetch the avatar URL using the key from the API
+  useEffect(() => {
+    const fetchAvatar = async () => {
+      // We only fetch if the notification is from a user and has an avatar key.
+      if (notification.type === 'FOLLOWER' && notification.sender?.avatar_key) {
+        try {
+          const response = await axiosCopy.get('/file/url', {
+            params: { key: notification.sender.avatar_key },
+          });
+          setAvatarUrl(response.data);
+        } catch (error) {
+          console.error('Failed to fetch notification avatar URL:', error);
+          setAvatarUrl(''); // Reset on error
+        }
+      }
+    };
+    fetchAvatar();
+  }, [notification.sender?.avatar_key, notification.type]);
+
+  // Derive title and avatar type based on notification content
+  const details = useMemo(() => {
+    const translations = translation[i18n.language].notifications;
+    const { type, sender, message } = notification;
+    const senderName = sender ? `${sender.firstname} ${sender.surname}` : translations.system;
+
+    switch (type) {
+      case 'GLOBAL':
+        return {
+          title: translations.globalNotification.replace('{message}', message || translations.defaultGlobalMessage),
+          avatar: <Avatar src={`${CONFIG.site.basePath}/assets/icons/notification/ic-order.svg`} sx={{ bgcolor: 'background.neutral' }} />
+        };
+      case 'FOLLOWER':
+        return {
+          title: translations.newFollower.replace('{senderName}', senderName),
+          avatar: avatarUrl ? (
+            <Avatar src={avatarUrl} sx={{ bgcolor: 'background.neutral' }} />
+          ) : (
+            <Avatar sx={{ bgcolor: 'primary.main' }}>{sender?.firstname?.[0]}</Avatar>
+          )
+        };
+      default:
+        return {
+          title: translations.defaultNotification,
+          avatar: <Avatar sx={{ bgcolor: 'info.main' }}>?</Avatar>
+        };
+    }
+  }, [notification, i18n.language, avatarUrl]);
 
   const handleItemClick = () => {
     if (notification.isUnRead) {
@@ -272,20 +287,10 @@ export function NotificationItem({ notification, onMarkAsRead }) {
     }
   };
 
-  const renderAvatar = (
-    <ListItemAvatar>
-      {avatar ? (
-        <Avatar src={avatar} sx={{ bgcolor: 'background.neutral' }} />
-      ) : (
-        <Avatar sx={{ bgcolor: 'primary.main' }}>{notification.sender?.firstname?.[0]}</Avatar>
-      )}
-    </ListItemAvatar>
-  );
-
   const renderText = (
     <ListItemText
       disableTypography
-      primary={reader(title)}
+      primary={reader(details.title)}
       secondary={
         <Typography variant="caption" sx={{ color: 'text.disabled' }}>
           {fToNow(notification.created_at)}
@@ -320,12 +325,13 @@ export function NotificationItem({ notification, onMarkAsRead }) {
       }}
     >
       {renderUnReadBadge}
-      {renderAvatar}
+      <ListItemAvatar>{details.avatar}</ListItemAvatar>
       <Stack sx={{ flexGrow: 1 }}>{renderText}</Stack>
     </ListItemButton>
   );
 }
 
+// Helper to render HTML content safely
 function reader(data) {
   return (
     <Box

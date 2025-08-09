@@ -1,5 +1,6 @@
 /* eslint-disable */
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
+import { useTranslation } from 'react-i18next';
 import {
   Box,
   Card,
@@ -9,14 +10,13 @@ import {
   Stack,
   Grid,
   Avatar,
-  Button,
   Divider,
 } from '@mui/material';
-import { useParams } from 'src/routes/hooks'; // Assuming you get the user ID/login from the URL
+import { useParams } from 'src/routes/hooks';
 
-import { DashboardContent } from './layouts/dashboard/index.js'; // Adjust path if needed
-import { axiosCopy, useAppStore } from 'src/store/useBoundStore';
-import { Iconify } from 'src/components/iconify';
+import { DashboardContent } from './layouts/dashboard/index.js';
+import { axiosCopy } from 'src/store/useBoundStore';
+import { translation } from './translation.js'; // Make sure path is correct
 
 // --- Reusable Component for fetching and displaying Avatars ---
 const DynamicAvatar = ({ avatarKey, alt, sx }) => {
@@ -58,20 +58,22 @@ const DynamicAvatar = ({ avatarKey, alt, sx }) => {
 };
 
 // --- Helper component to display a piece of info ---
-const InfoItem = ({ label, value }) => (
+const InfoItem = ({ label, value, notSpecifiedText }) => (
   <Box>
     <Typography variant="subtitle2" color="text.secondary">
       {label}
     </Typography>
-    <Typography variant="body1">{value || 'Не указано'}</Typography>
+    <Typography variant="body1">{value || notSpecifiedText}</Typography>
   </Box>
 );
 
 // --- Main User Profile Page Component ---
 export const UserProfilePage = () => {
-  // If viewing another user's profile, get their ID from the URL.
-  // If viewing your own, you might get it from the global store.
-  const { id } = useParams(); // Example: /user/:userId
+  const { id } = useParams();
+  const { i18n } = useTranslation();
+
+  // Memoize translation object to prevent re-renders
+  const t = useMemo(() => translation[i18n.language], [i18n.language]);
 
   const [profileData, setProfileData] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -82,36 +84,34 @@ export const UserProfilePage = () => {
   useEffect(() => {
     const fetchProfileData = async () => {
       if (!idToFetch) {
-        setError('User not found.');
+        setError(t.userNotFound);
         setIsLoading(false);
         return;
       }
       setIsLoading(true);
       setError('');
       try {
-        // Perform API calls in parallel for efficiency
         const [userRes, bioRes] = await Promise.all([
-          axiosCopy.get(`/user/me`), // Assuming this fetches the user by id if passed, or 'me' for current user
+          axiosCopy.get(`/user/me`),
           axiosCopy.get(`/user/bio/${idToFetch}`),
         ]);
 
-        // Merge the data from both responses
         const mergedData = {
-          ...userRes.data, // Base user data
-          bio: { ...userRes.data.bio, ...bioRes.data }, // Merge bio, with specific bio endpoint taking precedence
+          ...userRes.data,
+          bio: { ...userRes.data.bio, ...bioRes.data },
         };
 
         setProfileData(mergedData);
       } catch (err) {
         console.error('Failed to fetch profile data:', err);
-        setError('Could not load profile information.');
+        setError(t.profileLoadingError);
       } finally {
         setIsLoading(false);
       }
     };
 
     fetchProfileData();
-  }, [idToFetch]);
+  }, [idToFetch, t]);
 
   if (isLoading) {
     return (
@@ -138,21 +138,13 @@ export const UserProfilePage = () => {
   if (!profileData) {
     return (
       <DashboardContent>
-        <Typography sx={{ textAlign: 'center', mt: 5 }}>User profile not found.</Typography>
+        <Typography sx={{ textAlign: 'center', mt: 5 }}>{t.profileNotFound}</Typography>
       </DashboardContent>
     );
   }
 
-  const {
-    login,
-    firstname,
-    surname,
-    secondname,
-    avatar_key,
-    followers_count,
-    followings_count,
-    bio,
-  } = profileData;
+  const { login, firstname, surname, avatar_key, followers_count, followings_count, bio } =
+    profileData;
 
   const fullName = `${firstname || ''} ${surname || ''}`.trim();
 
@@ -174,10 +166,10 @@ export const UserProfilePage = () => {
                 </Typography>
                 <Stack direction="row" spacing={2} sx={{ pt: 1 }}>
                   <Typography variant="body2">
-                    <b>{followers_count}</b> Подписчиков
+                    <b>{followers_count}</b> {t.followers}
                   </Typography>
                   <Typography variant="body2">
-                    <b>{followings_count}</b> Подписан на
+                    <b>{followings_count}</b> {t.following}
                   </Typography>
                 </Stack>
               </Stack>
@@ -185,43 +177,55 @@ export const UserProfilePage = () => {
 
             <Divider />
 
-            <Typography variant="h6">Биография</Typography>
+            <Typography variant="h6">{t.biographyAndCareer}</Typography>
             <Grid container spacing={2}>
               <Grid item xs={12}>
-                <InfoItem label="О себе" value={bio.about_me} />
+                <InfoItem label={t.aboutMe} value={bio.about_me} notSpecifiedText={t.notSpecified} />
               </Grid>
               <Grid item xs={12} sm={6}>
-                <InfoItem label="Должность" value={bio.position} />
+                <InfoItem label={t.position} value={bio.position} notSpecifiedText={t.notSpecified} />
               </Grid>
               <Grid item xs={12} sm={6}>
-                <InfoItem label="Специализация" value={bio.specialization} />
+                <InfoItem
+                  label={t.specialization}
+                  value={bio.specialization}
+                  notSpecifiedText={t.notSpecified}
+                />
               </Grid>
               <Grid item xs={12} sm={6}>
-                <InfoItem label="Место работы" value={bio.work_place} />
+                <InfoItem
+                  label={t.workPlace}
+                  value={bio.work_place}
+                  notSpecifiedText={t.notSpecified}
+                />
               </Grid>
               <Grid item xs={12} sm={6}>
-                <InfoItem label="Страна" value={bio.country} />
+                <InfoItem label={t.country} value={bio.country} notSpecifiedText={t.notSpecified} />
               </Grid>
               <Grid item xs={12} sm={6}>
-                <InfoItem label="Город" value={bio.city} />
+                <InfoItem label={t.city} value={bio.city} notSpecifiedText={t.notSpecified} />
               </Grid>
             </Grid>
 
             <Divider />
 
-            <Typography variant="h6">Интересы</Typography>
+            <Typography variant="h6">{t.interestingAndOpinions}</Typography>
             <Grid container spacing={2}>
               <Grid item xs={12} sm={6}>
-                <InfoItem label="Хобби" value={bio.hobby} />
+                <InfoItem label={t.hobby} value={bio.hobby} notSpecifiedText={t.notSpecified} />
               </Grid>
               <Grid item xs={12} sm={6}>
-                <InfoItem label="Любимые фильмы" value={bio.movies} />
+                <InfoItem label={t.films} value={bio.movies} notSpecifiedText={t.notSpecified} />
               </Grid>
               <Grid item xs={12} sm={6}>
-                <InfoItem label="Любимая музыка" value={bio.musics} />
+                <InfoItem label={t.music} value={bio.musics} notSpecifiedText={t.notSpecified} />
               </Grid>
               <Grid item xs={12} sm={6}>
-                <InfoItem label="Мировоззрение" value={bio.worldview} />
+                <InfoItem
+                  label={t.worldvide}
+                  value={bio.worldview}
+                  notSpecifiedText={t.notSpecified}
+                />
               </Grid>
             </Grid>
           </Stack>

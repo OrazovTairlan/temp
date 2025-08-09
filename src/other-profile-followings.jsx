@@ -86,7 +86,7 @@ function FollowingItem({ user, onFollowToggle, isUpdating }) {
         loading={isUpdating}
         sx={{ flexShrink: 0, ml: 1.5 }}
       >
-        {is_following ? 'Вы подписаны' : 'Подписаться'}
+        {is_following ? 'Подписаться' : 'Отписаться'}
       </LoadingButton>
     </Card>
   );

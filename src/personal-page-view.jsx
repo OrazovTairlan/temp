@@ -65,7 +65,6 @@ const getDirtyValues = (dirtyFields, allValues) => {
 const GeneralSettingsForm = ({ userData, onUpdate }) => {
   const { i18n } = useTranslation();
 
-  // Zod schema is now defined inside the component to access i18n
   const GeneralInfoSchema = useMemo(
     () =>
       zod.object({
@@ -95,20 +94,12 @@ const GeneralSettingsForm = ({ userData, onUpdate }) => {
     [i18n.language]
   );
 
+  // --- Position options are now dynamic based on language ---
+  const positionOptions = useMemo(() => Object.values(translation[i18n.language].positionOptions), [i18n.language]);
+
   const [avatarFile, setAvatarFile] = useState(null);
   const [avatarUrl, setAvatarUrl] = useState('');
   const [avatarPreview, setAvatarPreview] = useState('');
-
-  const positionOptions = [
-    'Абитуриент на Мед-универ',
-    'Студент медицинской школы/бакалавриат',
-    'Интерн',
-    'Резидент/ординатор (студент узкой специальности)',
-    'Медсестра/медбрат',
-    'Лицензированный врач',
-    'Исследователь/научный сотрудник',
-    'Другое',
-  ];
 
   const methods = useForm({
     resolver: zodResolver(GeneralInfoSchema),
@@ -129,12 +120,12 @@ const GeneralSettingsForm = ({ userData, onUpdate }) => {
           });
           setAvatarUrl(response.data);
         } catch (error) {
-          console.error('Failed to fetch avatar URL:', error);
+          console.error(translation[i18n.language].failed_to_fetch_avatar, error);
         }
       }
     };
     fetchAvatar();
-  }, [userData?.avatar_key]);
+  }, [userData?.avatar_key, i18n.language]);
 
   const handleAvatarChange = (event) => {
     const file = event.target.files[0];
@@ -177,7 +168,7 @@ const GeneralSettingsForm = ({ userData, onUpdate }) => {
         <Grid item xs={12} md={8}>
           <Card sx={{ p: 3 }}>
             <Stack spacing={2}>
-              <Typography variant="h6">{translation[i18n.language].general}</Typography>
+              <Typography variant="h6">{translation[i18n.language].mainInformation}</Typography>
               <Field.Text name="login" label={translation[i18n.language].login} />
               <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2}>
                 <Field.Text name="firstname" label={translation[i18n.language].firstname} />
@@ -191,7 +182,6 @@ const GeneralSettingsForm = ({ userData, onUpdate }) => {
                 type="date"
                 InputLabelProps={{ shrink: true }}
               />
-
               <Typography variant="h6" sx={{ pt: 2 }}>
                 {translation[i18n.language].biographyAndCareer}
               </Typography>
@@ -217,7 +207,6 @@ const GeneralSettingsForm = ({ userData, onUpdate }) => {
                   </MenuItem>
                 ))}
               </Field.Select>
-
               <Typography variant="h6" sx={{ pt: 2 }}>
                 {translation[i18n.language].interestingAndOpinions}
               </Typography>
@@ -247,7 +236,6 @@ const GeneralSettingsForm = ({ userData, onUpdate }) => {
 const SecuritySettingsForm = ({ onUpdate }) => {
   const { i18n } = useTranslation();
 
-  // Zod schema is now defined inside the component to access i18n
   const PasswordSchema = useMemo(
     () =>
       zod.object({
@@ -313,7 +301,6 @@ const SecuritySettingsForm = ({ onUpdate }) => {
 const SupportForm = ({ onUpdate }) => {
   const { i18n } = useTranslation();
 
-  // Zod schema is now defined inside the component to access i18n
   const SupportSchema = useMemo(
     () =>
       zod.object({
@@ -411,7 +398,10 @@ export const AccountSettingsPage = () => {
       if (!sanitizedUser.bio) {
         sanitizedUser.bio = {};
       }
-      sanitizedUser.bio.position = sanitizedUser.bio.position ?? 'Абитуриент на Мед-универ';
+
+      // --- Default position is now dynamic based on language ---
+      const defaultPosition = Object.values(translation[i18n.language].positionOptions)[0];
+      sanitizedUser.bio.position = sanitizedUser.bio.position || defaultPosition;
 
       const replaceNullWithEmpty = (obj) => {
         Object.keys(obj).forEach((key) => {
@@ -426,11 +416,11 @@ export const AccountSettingsPage = () => {
       replaceNullWithEmpty(sanitizedUser);
       setUserData(sanitizedUser);
     } catch (err) {
-      setError('Не удалось загрузить данные профиля.');
+      setError(translation[i18n.language].error);
     } finally {
       setIsLoading(false);
     }
-  }, []);
+  }, [i18n.language]); // Add i18n.language as a dependency
 
   useEffect(() => {
     fetchInitialData();
@@ -607,11 +597,10 @@ export const AccountSettingsPage = () => {
         </DialogContent>
         <DialogActions>
           <Button onClick={() => setIsConfirmOpen(false)}>
-            {' '}
             {translation[i18n.language].close}
           </Button>
           <LoadingButton onClick={handleDeleteAccount} color="error" loading={isDeleting}>
-            {translation[i18n.language].deleteAccount}
+            {translation[i18n.language].delete}
           </LoadingButton>
         </DialogActions>
       </Dialog>

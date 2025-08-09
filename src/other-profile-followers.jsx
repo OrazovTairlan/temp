@@ -91,9 +91,7 @@ function FollowerItem({ follower, onFollowToggle, isUpdating }) {
         loading={isUpdating}
         sx={{ flexShrink: 0, ml: 1.5 }}
       >
-        {is_following
-          ? translation[i18n.language].statusFollowed
-          : translation[i18n.language].follow}
+        {is_following ? translation[i18n.language].unFollow : translation[i18n.language].follow}
       </LoadingButton>
     </Card>
   );

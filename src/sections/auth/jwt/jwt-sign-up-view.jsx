@@ -21,8 +21,6 @@ import { useBoolean } from 'src/hooks/use-boolean';
 import { Iconify } from 'src/components/iconify';
 import { Form, Field } from 'src/components/hook-form';
 import { axiosCopy } from '../../../store/useBoundStore.js';
-
-// ❗️ Adjust the path to your translation file
 import { translation } from 'src/translation.js';
 
 // ----------------------------------------------------------------------
@@ -35,60 +33,74 @@ export function JwtSignUpView() {
   const [successMsg, setSuccessMsg] = useState('');
 
   // --- Dynamic Schema Definition ---
-  // Validation messages are translated, but the schema structure is static.
-  const RegistrationSchema = useMemo(() => zod.object({
-    login: zod.string().min(1, { message: translation[i18n.language].validationSignUp.loginRequired }),
-    password: zod.string()
-      .min(1, { message: translation[i18n.language].validationSignUp.passwordRequired })
-      .min(6, { message: translation[i18n.language].validationSignUp.passwordMinLength }),
-    email: zod.string()
-      .min(1, { message: translation[i18n.language].validationSignUp.emailRequired })
-      .email({ message: translation[i18n.language].validationSignUp.emailInvalid }),
-    firstname: zod.string().min(1, { message: translation[i18n.language].validationSignUp.firstnameRequired }),
-    surname: zod.string().min(1, { message: translation[i18n.language].validationSignUp.surnameRequired }),
-    secondname: zod.string().optional(),
-    birthday: zod.string().min(1, { message: translation[i18n.language].validationSignUp.birthdayRequired }),
-    country: zod.string().min(1, { message: translation[i18n.language].validationSignUp.countryRequired }),
-    city: zod.string().min(1, { message: translation[i18n.language].validationSignUp.cityRequired }),
-    position: zod.string().min(1, { message: translation[i18n.language].validationSignUp.positionRequired }),
-    sub_position: zod.string().optional(),
-    specialization: zod.string().min(1, { message: translation[i18n.language].validationSignUp.specializationRequired }),
-  }), [i18n.language]);
+  const RegistrationSchema = useMemo(
+    () =>
+      zod.object({
+        login: zod
+          .string()
+          .min(1, { message: translation[i18n.language].validationSignUp.loginRequired }),
+        password: zod
+          .string()
+          .min(1, { message: translation[i18n.language].validationSignUp.passwordRequired })
+          .min(6, { message: translation[i18n.language].validationSignUp.passwordMinLength }),
+        email: zod
+          .string()
+          .min(1, { message: translation[i18n.language].validationSignUp.emailRequired })
+          .email({ message: translation[i18n.language].validationSignUp.emailInvalid }),
+        firstname: zod
+          .string()
+          .min(1, { message: translation[i18n.language].validationSignUp.firstnameRequired }),
+        surname: zod
+          .string()
+          .min(1, { message: translation[i18n.language].validationSignUp.surnameRequired }),
+        secondname: zod.string().optional(),
+        birthday: zod
+          .string()
+          .min(1, { message: translation[i18n.language].validationSignUp.birthdayRequired }),
+        country: zod
+          .string()
+          .min(1, { message: translation[i18n.language].validationSignUp.countryRequired }),
+        city: zod
+          .string()
+          .min(1, { message: translation[i18n.language].validationSignUp.cityRequired }),
+        position: zod
+          .string()
+          .min(1, { message: translation[i18n.language].validationSignUp.positionRequired }),
+        sub_position: zod.string().optional(),
+        specialization: zod
+          .string()
+          .min(1, { message: translation[i18n.language].validationSignUp.specializationRequired }),
+      }),
+    [i18n.language]
+  );
 
+  // --- Dynamic Dropdown Options from translation file ---
+  const positionOptions = useMemo(
+    () => Object.values(translation[i18n.language].positionOptions),
+    [i18n.language]
+  );
+  const subPositionOptions = useMemo(
+    () => Object.values(translation[i18n.language].subPositionOptions),
+    [i18n.language]
+  );
 
-  // --- Static Russian Options as requested ---
-  const positionOptions = [
-    'Абитуриент на Мед-универ',
-    'Студент медицинской школы/бакалавриат',
-    'Интерн',
-    'Резидент/ординатор (студент узкой специальности)',
-    'Медсестра/медбрат',
-    'Лицензированный врач',
-    'Исследователь/научный сотрудник',
-    'Другое',
-  ];
-
-  const subPositionOptions = [
-    'Общественное здравоохранение',
-    'Политика',
-    'Менеджмент',
-    'Врач на пенсии',
-  ];
-
-  const defaultValues = {
-    login: '',
-    password: '',
-    email: '',
-    firstname: '',
-    surname: '',
-    secondname: '',
-    birthday: '',
-    country: '',
-    city: '',
-    position: positionOptions[0],
-    sub_position: subPositionOptions[0],
-    specialization: '',
-  };
+  const defaultValues = useMemo(
+    () => ({
+      login: '',
+      password: '',
+      email: '',
+      firstname: '',
+      surname: '',
+      secondname: '',
+      birthday: '',
+      country: '',
+      city: '',
+      position: positionOptions[0],
+      sub_position: subPositionOptions[0],
+      specialization: '',
+    }),
+    [positionOptions, subPositionOptions]
+  );
 
   const methods = useForm({
     resolver: zodResolver(RegistrationSchema),
@@ -108,8 +120,8 @@ export function JwtSignUpView() {
     setSuccessMsg('');
     try {
       const payload = { ...data };
-      // Logic now compares against the static Russian string 'Другое'
-      if (payload.position !== 'Другое') {
+      // **FIX:** Logic now correctly compares against the translated "Other" value
+      if (payload.position !== translation[i18n.language].positionOptions.other) {
         delete payload.sub_position;
       }
       await axiosCopy.post('/register', payload);
@@ -119,7 +131,10 @@ export function JwtSignUpView() {
       }, 2000);
     } catch (error) {
       console.error('Registration failed:', error);
-      const message = error.response?.data?.detail || error.message || translation[i18n.language].registrationError;
+      const message =
+        error.response?.data?.detail ||
+        error.message ||
+        translation[i18n.language].registrationError;
       setErrorMsg(message);
     }
   });
@@ -127,8 +142,16 @@ export function JwtSignUpView() {
   const renderHead = (
     <Stack spacing={1.5} sx={{ mb: 5 }}>
       <Stack sx={{ px: 2, py: 5, textAlign: 'center' }}>
-        <Typography variant="h6" sx={{ color: 'text.primary', fontWeight: '900', textTransform: 'uppercase', letterSpacing: 1.5 }}>
-          Interlinked
+        <Typography
+          variant="h6"
+          sx={{
+            color: 'text.primary',
+            fontWeight: '900',
+            textTransform: 'uppercase',
+            letterSpacing: 1.5,
+          }}
+        >
+          {translation[i18n.language].appName}
         </Typography>
       </Stack>
       <Typography variant="h5">{translation[i18n.language].createAccount}</Typography>
@@ -145,13 +168,33 @@ export function JwtSignUpView() {
 
   const renderForm = (
     <Stack spacing={3}>
-      <Field.Text name="login" label={translation[i18n.language].login} InputLabelProps={{ shrink: true }} />
+      <Field.Text
+        name="login"
+        label={translation[i18n.language].login}
+        InputLabelProps={{ shrink: true }}
+      />
       <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2}>
-        <Field.Text name="firstname" label={translation[i18n.language].firstname} InputLabelProps={{ shrink: true }} />
-        <Field.Text name="surname" label={translation[i18n.language].surname} InputLabelProps={{ shrink: true }} />
-        <Field.Text name="secondname" label={translation[i18n.language].secondname} InputLabelProps={{ shrink: true }} />
+        <Field.Text
+          name="firstname"
+          label={translation[i18n.language].firstname}
+          InputLabelProps={{ shrink: true }}
+        />
+        <Field.Text
+          name="surname"
+          label={translation[i18n.language].surname}
+          InputLabelProps={{ shrink: true }}
+        />
+        <Field.Text
+          name="secondname"
+          label={translation[i18n.language].secondname}
+          InputLabelProps={{ shrink: true }}
+        />
       </Stack>
-      <Field.Text name="email" label={translation[i18n.language].email} InputLabelProps={{ shrink: true }} />
+      <Field.Text
+        name="email"
+        label={translation[i18n.language].email}
+        InputLabelProps={{ shrink: true }}
+      />
       <Field.Text
         name="password"
         label={translation[i18n.language].password}
@@ -168,24 +211,41 @@ export function JwtSignUpView() {
           ),
         }}
       />
-      <Field.Text name="birthday" label={translation[i18n.language].birthDate} type="date" InputLabelProps={{ shrink: true }} />
+      <Field.Text
+        name="birthday"
+        label={translation[i18n.language].birthDate}
+        type="date"
+        InputLabelProps={{ shrink: true }}
+      />
       <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2}>
-        <Field.Text name="country" label={translation[i18n.language].country} InputLabelProps={{ shrink: true }} />
-        <Field.Text name="city" label={translation[i18n.language].city} InputLabelProps={{ shrink: true }} />
+        <Field.Text
+          name="country"
+          label={translation[i18n.language].country}
+          InputLabelProps={{ shrink: true }}
+        />
+        <Field.Text
+          name="city"
+          label={translation[i18n.language].city}
+          InputLabelProps={{ shrink: true }}
+        />
       </Stack>
 
-      {/* Position Dropdown (uses static Russian options) */}
+      {/* Position Dropdown now uses dynamic options */}
       <Field.Select name="position" label={translation[i18n.language].position}>
         {positionOptions.map((option) => (
-          <MenuItem key={option} value={option}>{option}</MenuItem>
+          <MenuItem key={option} value={option}>
+            {option}
+          </MenuItem>
         ))}
       </Field.Select>
 
-      {/* Conditional Sub-Position Dropdown (uses static Russian options) */}
-      {selectedPosition === 'Другое' && (
+      {/* Conditional Sub-Position Dropdown */}
+      {selectedPosition === translation[i18n.language].positionOptions.other && (
         <Field.Select name="sub_position" label={translation[i18n.language].subPosition}>
           {subPositionOptions.map((option) => (
-            <MenuItem key={option} value={option}>{option}</MenuItem>
+            <MenuItem key={option} value={option}>
+              {option}
+            </MenuItem>
           ))}
         </Field.Select>
       )}
@@ -213,8 +273,16 @@ export function JwtSignUpView() {
   return (
     <>
       {renderHead}
-      {!!errorMsg && <Alert severity="error" sx={{ mb: 3 }}>{errorMsg}</Alert>}
-      {!!successMsg && <Alert severity="success" sx={{ mb: 3 }}>{successMsg}</Alert>}
+      {!!errorMsg && (
+        <Alert severity="error" sx={{ mb: 3 }}>
+          {errorMsg}
+        </Alert>
+      )}
+      {!!successMsg && (
+        <Alert severity="success" sx={{ mb: 3 }}>
+          {successMsg}
+        </Alert>
+      )}
       <Form methods={methods} onSubmit={onSubmit}>
         {renderForm}
       </Form>

@@ -10,11 +10,15 @@ import { Section } from './section';
 import { Main, Content } from './main';
 import { HeaderBase } from '../core/header-base';
 import { LayoutSection } from '../core/layout-section';
+import { ChangePopover } from '../../ChangePopover.jsx';
+import { useTranslation } from 'react-i18next';
+import { translation } from '../../translation.js';
 
 // ----------------------------------------------------------------------
 
 export function AuthSplitLayout({ sx, section, children }) {
   const mobileNavOpen = useBoolean();
+  const { i18n } = useTranslation();
 
   const layoutQuery = 'md';
 
@@ -64,7 +68,7 @@ export function AuthSplitLayout({ sx, section, children }) {
     >
       <Main layoutQuery={layoutQuery}>
         <Section
-          title={section?.title}
+          title={translation[i18n.language].registrationTitle}
           layoutQuery={layoutQuery}
           imgUrl={section?.imgUrl}
           method={CONFIG.auth.method}
